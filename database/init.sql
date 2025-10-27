@@ -2,17 +2,17 @@
 -- Execute este script no SQL Server Management Studio ou via sqlcmd
 
 -- Criar banco de dados
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'nps_surveys')
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'survey_analytics')
 BEGIN
-    CREATE DATABASE nps_surveys;
+    CREATE DATABASE survey_analytics;
 END
 GO
 
-USE nps_surveys;
+USE survey_analytics;
 GO
 
 -- Configurar collation para suporte a caracteres especiais
-ALTER DATABASE nps_surveys COLLATE SQL_Latin1_General_CP1_CI_AS;
+ALTER DATABASE survey_analytics COLLATE SQL_Latin1_General_CP1_CI_AS;
 GO
 
 -- Criar usuário para a aplicação (opcional)
@@ -34,4 +34,4 @@ END
 GO
 */
 
-PRINT 'Banco de dados nps_surveys configurado com sucesso!';
+PRINT 'Banco de dados survey_analytics configurado com sucesso!';

@@ -1,6 +1,6 @@
-# Sistema de Pesquisas NPS
+# Survey Analytics
 
-Sistema híbrido para coleta e análise de pesquisas NPS (Net Promoter Score) utilizando Django para administração e FastAPI para coleta de respostas.
+Sistema híbrido para coleta e análise de pesquisas NPS, CSAT e CES utilizando Django para administração e FastAPI para coleta de respostas.
 
 ## 🏗️ Arquitetura
 
@@ -12,29 +12,28 @@ Sistema híbrido para coleta e análise de pesquisas NPS (Net Promoter Score) ut
 ## 📁 Estrutura do Projeto
 
 ```
-pesquisas_nps/
-├── django_app/                 # Aplicação Django
-│   ├── nps_admin/             # Configurações do projeto Django
-│   ├── surveys/               # App de pesquisas
-│   │   ├── models.py          # Modelos de dados
-│   │   ├── admin.py           # Interface administrativa
-│   │   ├── serializers.py     # Serializers para API REST
-│   │   ├── views.py           # Views da API REST
-│   │   └── urls.py            # URLs da API
+survey_analytics/
+├── dashboard/                 # Aplicação Django (Painel Admin)
+│   ├── survey_analytics/     # Configurações do projeto Django
+│   ├── dashboard/            # App de dashboard
+│   │   ├── models.py         # Modelos de dados (Customer, Survey, Response)
+│   │   ├── admin.py          # Interface administrativa
+│   │   ├── views.py          # Views do dashboard e relatórios
+│   │   ├── urls.py           # URLs do dashboard
+│   │   └── templates/        # Templates HTML com Bootstrap e Chart.js
 │   └── manage.py
-├── fastapi_app/               # Aplicação FastAPI
-│   ├── routers/               # Routers da API
-│   ├── main.py                # Aplicação principal
-│   ├── models.py              # Modelos SQLAlchemy
-│   ├── schemas.py             # Schemas Pydantic
-│   └── database.py            # Configuração do banco
-├── shared/                    # Código compartilhado
-├── database/                  # Scripts de banco
-├── migrations/                # Migrações
-├── scripts/                   # Scripts utilitários
-├── docs/                      # Documentação
-├── requirements.txt           # Dependências Python
-├── docker-compose.yml         # Orquestração de containers
+├── collector/                # Aplicação FastAPI (Coleta)
+│   ├── api/                  # Endpoints REST
+│   │   └── nps.py           # Endpoints NPS (/api/nps/submit, /results, /summary)
+│   ├── schemas/             # Schemas Pydantic e Modelos SQLAlchemy
+│   ├── crud/                # Operações CRUD
+│   ├── main.py              # Aplicação principal FastAPI
+│   └── database.py          # Configuração do banco
+├── database/                # Scripts de banco
+├── scripts/                 # Scripts utilitários
+├── docs/                    # Documentação
+├── requirements.txt         # Dependências Python
+├── docker-compose.yml       # Orquestração de containers
 └── README.md
 ```
 
@@ -50,7 +49,7 @@ pesquisas_nps/
 
 ```bash
 git clone <url-do-repositorio>
-cd pesquisas_nps
+cd survey_analytics
 ```
 
 ### 2. Configure o ambiente virtual
@@ -90,18 +89,18 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 # Database Settings
 DB_HOST=localhost
 DB_PORT=1433
-DB_NAME=nps_surveys
+DB_NAME=survey_analytics
 DB_USER=seu-usuario
 DB_PASSWORD=sua-senha
 ```
 
 ### 5. Configure o banco de dados
 
-1. Crie o banco de dados `nps_surveys` no SQL Server
+1. Crie o banco de dados `survey_analytics` no SQL Server
 2. Execute as migrações do Django:
 
 ```bash
-cd django_app
+cd dashboard
 python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
@@ -109,15 +108,15 @@ python manage.py createsuperuser
 
 ### 6. Execute as aplicações
 
-#### Django (Admin - Porta 8000)
+#### Django (Dashboard - Porta 8000)
 ```bash
-cd django_app
+cd dashboard
 python manage.py runserver
 ```
 
-#### FastAPI (API - Porta 8001)
+#### FastAPI (Collector - Porta 8001)
 ```bash
-cd fastapi_app
+cd collector
 uvicorn main:app --reload --port 8001
 ```
 
@@ -152,74 +151,61 @@ docker-compose down
 
 ## 🔗 Endpoints da API
 
-### FastAPI (http://localhost:8001)
+### FastAPI Collector (http://localhost:8001)
 
-#### Pesquisas
-- `GET /api/v1/surveys` - Listar pesquisas ativas
-- `GET /api/v1/surveys/{id}` - Obter pesquisa específica
+#### NPS
+- `POST /api/nps/submit` - Enviar resposta NPS
+- `GET /api/nps/results` - Listar resultados NPS
+- `GET /api/nps/summary` - Resumo agregado NPS
 
-#### Respostas
-- `POST /api/v1/responses` - Enviar resposta de pesquisa
-- `GET /api/v1/responses` - Listar respostas (admin)
-- `GET /api/v1/surveys/{id}/responses` - Respostas de uma pesquisa
+### Django Dashboard (http://localhost:8000)
 
-### Django REST (http://localhost:8000)
-
-#### Pesquisas
-- `GET /api/surveys/` - Listar pesquisas
-- `POST /api/surveys/` - Criar pesquisa
-- `GET /api/surveys/{id}/responses/` - Respostas de uma pesquisa
-- `POST /api/surveys/{id}/calculate_nps/` - Calcular NPS
+#### Dashboard
+- `GET /` - Dashboard principal com gráficos
+- `GET /surveys/` - Lista de pesquisas
+- `GET /responses/` - Lista de respostas com filtros
+- `GET /export/csv/` - Exportar CSV
+- `GET /export/excel/` - Exportar Excel
+- `GET /admin/` - Interface administrativa
 
 ## 📝 Exemplo de Uso
 
-### Enviar Resposta via FastAPI
+### Enviar Resposta NPS via FastAPI
 
 ```bash
-curl -X POST "http://localhost:8001/api/v1/responses" \
+curl -X POST "http://localhost:8001/api/nps/submit" \
   -H "Content-Type: application/json" \
   -d '{
+    "customer_name": "João Silva",
+    "customer_email": "joao@example.com",
+    "customer_company": "Empresa ABC",
     "survey_id": 1,
-    "respondent_id": "user123",
-    "respondent_email": "user@example.com",
-    "answers": [
-      {
-        "question_id": 1,
-        "answer_value": "9"
-      },
-      {
-        "question_id": 2,
-        "answer_text": "Excelente atendimento!"
-      }
-    ]
+    "score": 9,
+    "comment": "Excelente atendimento!"
   }'
 ```
 
-### Calcular NPS via Django
+### Obter Resumo NPS via FastAPI
 
 ```bash
-curl -X POST "http://localhost:8000/api/surveys/1/calculate_nps/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "period_start": "2024-01-01",
-    "period_end": "2024-01-31"
-  }'
+curl -X GET "http://localhost:8001/api/nps/summary"
 ```
 
 ## 🧪 Testes
 
 ```bash
 # Testes Django
-cd django_app
+cd dashboard
 python manage.py test
 
 # Testes FastAPI
-cd fastapi_app
+cd collector
 pytest
 ```
 
 ## 📈 Monitoramento
 
+- **Django Dashboard**: http://localhost:8000/
 - **Django Admin**: http://localhost:8000/admin/
 - **FastAPI Docs**: http://localhost:8001/docs
 - **FastAPI ReDoc**: http://localhost:8001/redoc

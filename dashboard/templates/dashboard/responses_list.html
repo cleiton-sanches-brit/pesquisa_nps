@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Respostas - Survey Analytics{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-comments me-2"></i>
+                Respostas
+            </h1>
+            <div>
+                <a href="{% url 'dashboard:export_csv' %}" class="btn btn-outline-info me-2">
+                    <i class="fas fa-download me-2"></i>
+                    CSV
+                </a>
+                <a href="{% url 'dashboard:export_excel' %}" class="btn btn-outline-success">
+                    <i class="fas fa-file-excel me-2"></i>
+                    Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtros
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="survey" class="form-label">Pesquisa</label>
+                        <select class="form-select" id="survey" name="survey">
+                            <option value="">Todas as pesquisas</option>
+                            {% for survey in surveys %}
+                            <option value="{{ survey.id }}" {% if filters.survey_id == survey.id|stringformat:"s" %}selected{% endif %}>
+                                {{ survey.title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="customer" class="form-label">Cliente</label>
+                        <select class="form-select" id="customer" name="customer">
+                            <option value="">Todos os clientes</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if filters.customer_id == customer.id|stringformat:"s" %}selected{% endif %}>
+                                {{ customer.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label">Data Inicial</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" value="{{ filters.date_from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label">Data Final</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" value="{{ filters.date_to }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>
+                                Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Respostas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Respostas ({{ responses.count }})
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% if responses %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Pesquisa</th>
+                                <th>Tipo</th>
+                                <th>Nota</th>
+                                <th>Comentário</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for response in responses %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>{{ response.customer.name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ response.customer.email }}</small>
+                                        {% if response.customer.company %}
+                                        <br>
+                                        <small class="text-muted">{{ response.customer.company }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ response.survey.title }}</td>
+                                <td>
+                                    <span class="badge bg-{% if response.survey.survey_type == 'nps' %}primary{% elif response.survey.survey_type == 'csat' %}success{% elif response.survey.survey_type == 'ces' %}warning{% else %}secondary{% endif %}">
+                                        {{ response.survey.get_survey_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if response.score %}
+                                        <span class="badge bg-{% if response.score >= 9 %}success{% elif response.score >= 7 %}warning{% else %}danger{% endif %}">
+                                            {{ response.score }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if response.comment %}
+                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ response.comment }}">
+                                            {{ response.comment|truncatechars:50 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ response.submitted_at|date:"d/m/Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    <a href="/admin/dashboard/response/{{ response.id }}/change/" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhuma resposta encontrada</h4>
+                    <p class="text-muted">As respostas aparecerão aqui quando forem coletadas.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

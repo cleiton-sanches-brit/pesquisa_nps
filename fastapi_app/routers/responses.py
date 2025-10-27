@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from ..database import get_db
-from ..models import SurveyResponse, Answer, Survey, Question
-from ..schemas import SurveyResponse, SurveyResponseCreate, SurveyResponsePublic
+from database import get_db
+from models import SurveyResponse, Answer, Survey, Question
+from schemas import SurveyResponse, SurveyResponseCreate, SurveyResponsePublic
 
 router = APIRouter()
 

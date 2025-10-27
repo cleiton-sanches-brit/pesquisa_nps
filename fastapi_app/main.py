@@ -4,8 +4,8 @@ from fastapi.responses import JSONResponse
 import uvicorn
 from dotenv import load_dotenv
 import os
-from .routers import surveys, responses
-from .database import engine, Base
+from routers import surveys, responses
+from database import engine, Base
 
 # Load environment variables
 load_dotenv()

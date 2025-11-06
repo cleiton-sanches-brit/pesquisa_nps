@@ -14,7 +14,18 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-temporary-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# ALLOWED_HOSTS - suporta Railway e outros ambientes
+ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',')]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Adiciona domínio do Railway automaticamente se estiver rodando no Railway
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_PUBLIC_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
+    ALLOWED_HOSTS.append(f'*.{RAILWAY_PUBLIC_DOMAIN.split(".", 1)[-1]}' if '.' in RAILWAY_PUBLIC_DOMAIN else f'*.{RAILWAY_PUBLIC_DOMAIN}')
 
 # Application definition
 INSTALLED_APPS = [
@@ -125,7 +136,19 @@ SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 CSRF_COOKIE_SECURE = not DEBUG  # Apenas em produção
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000').split(',')
+# CSRF_TRUSTED_ORIGINS - suporta Railway e outros ambientes
+CSRF_TRUSTED_ORIGINS_ENV = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000')
+if CSRF_TRUSTED_ORIGINS_ENV:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS_ENV.split(',')]
+else:
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
+
+# Adiciona domínio do Railway automaticamente se estiver rodando no Railway
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_PUBLIC_DOMAIN:
+    railway_origin = f'https://{RAILWAY_PUBLIC_DOMAIN}'
+    if railway_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(railway_origin)
 
 # Session settings
 SESSION_COOKIE_SECURE = not DEBUG  # Apenas em produção

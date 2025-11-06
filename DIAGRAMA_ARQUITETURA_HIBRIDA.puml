@@ -1,0 +1,47 @@
+@startuml Arquitetura Híbrida Azure + HostGator
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+title Arquitetura Híbrida - Azure + HostGator
+
+package "Internet" {
+  [Usuários] as Users
+}
+
+package "Azure Cloud" {
+  component [Azure App Service\nDjango Backend] as Django #0078D4
+  component [Azure App Service\nFastAPI] as FastAPI #0078D4
+  database [Azure Database\nPostgreSQL] as DB #336791
+  component [SendGrid\nEmail Transacional] as SendGrid #1A82E2
+  component [Azure DNS\nApp Domain] as AzureDNS #0078D4
+}
+
+package "HostGator" {
+  component [HostGator DNS\nEmail Domain] as HostDNS #FF6600
+  component [Email MX Records\nCaixas Corporativas] as EmailMX #FF6600
+}
+
+Users -->|HTTPS| AzureDNS
+AzureDNS --> Django
+AzureDNS --> FastAPI
+Django --> DB
+FastAPI --> DB
+Django --> SendGrid
+SendGrid -->|Deliver| Users
+
+EmailMX ..>|Recebe| Users
+HostDNS ..>|MX Records| EmailMX
+
+note right of SendGrid
+  SendGrid para envio
+  transacional de convites
+end note
+
+note right of EmailMX
+  HostGator apenas para
+  emails corporativos
+  (recebimento)
+end note
+
+@enduml
+

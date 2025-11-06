@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa Expirada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        .message {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .survey-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .survey-info h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .survey-info p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .expiry-date {
+            color: #f5576c;
+            font-weight: 600;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⏰</div>
+        <h1>Pesquisa Expirada</h1>
+        <p class="message">
+            Desculpe, mas esta pesquisa não está mais disponível para resposta.
+            O prazo para responder expirou.
+        </p>
+
+        <div class="survey-info">
+            <h2>{{ survey.title }}</h2>
+            {% if expires_at %}
+            <p><strong>Expirou em:</strong> <span class="expiry-date">{{ expires_at|date:"d/m/Y H:i" }}</span></p>
+            {% endif %}
+            {% if survey.description %}
+            <p>{{ survey.description }}</p>
+            {% endif %}
+        </div>
+
+        <p class="message" style="font-size: 14px; color: #888;">
+            Se você acredita que isso é um erro, entre em contato com o administrador da pesquisa.
+        </p>
+    </div>
+</body>
+</html>

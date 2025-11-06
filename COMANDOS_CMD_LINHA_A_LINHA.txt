@@ -1,0 +1,92 @@
+================================================================================
+        COMANDOS CMD - INICIAR SERVIDOR DJANGO (LINHA A LINHA)
+================================================================================
+
+SIGA ESTES COMANDOS NA ORDEM, UM POR VEZ, NO CMD DO WINDOWS:
+
+================================================================================
+PASSO 1: Abrir o CMD
+================================================================================
+
+- Pressione Windows + R
+- Digite: cmd
+- Pressione Enter
+
+================================================================================
+PASSO 2: Navegar até o diretório do projeto
+================================================================================
+
+Digite exatamente (copie e cole):
+
+cd /d C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\pesquisas_nps
+
+Pressione Enter
+
+================================================================================
+PASSO 3: Entrar no diretório django_app
+================================================================================
+
+Digite exatamente:
+
+cd django_app
+
+Pressione Enter
+
+================================================================================
+PASSO 4: Iniciar o servidor Django
+================================================================================
+
+Digite exatamente:
+
+..\venv\Scripts\python.exe manage.py runserver
+
+Pressione Enter
+
+================================================================================
+RESULTADO ESPERADO
+================================================================================
+
+Você deve ver algo como:
+
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+================================================================================
+ACESSAR O ADMIN
+================================================================================
+
+Abra o navegador e acesse:
+
+http://localhost:8000/admin/
+
+================================================================================
+PARAR O SERVIDOR
+================================================================================
+
+No CMD onde o servidor está rodando:
+- Pressione Ctrl + C
+
+================================================================================
+SE DER ERRO - TENTE ESTA ALTERNATIVA
+================================================================================
+
+Se o comando do passo 4 não funcionar, tente:
+
+python manage.py runserver
+
+(Isso funciona se o Python estiver no PATH do sistema)
+
+================================================================================
+VERIFICAR SE ESTÁ NO LUGAR CERTO
+================================================================================
+
+Antes do passo 4, você pode verificar digitando:
+
+dir
+
+Você deve ver o arquivo "manage.py" na lista.
+
+================================================================================
+                    FIM DOS COMANDOS
+================================================================================
+

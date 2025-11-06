@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa Já Respondida</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        .message {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .survey-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .survey-info h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .survey-info p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .answered-date {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">✅</div>
+        <h1>Pesquisa Já Respondida</h1>
+        <p class="message">
+            Obrigado! Você já respondeu esta pesquisa.
+        </p>
+
+        <div class="survey-info">
+            <h2>{{ survey.title }}</h2>
+            {% if used_at %}
+            <p><strong>Respondida em:</strong> <span class="answered-date">{{ used_at|date:"d/m/Y H:i" }}</span></p>
+            {% endif %}
+            {% if survey.description %}
+            <p>{{ survey.description }}</p>
+            {% endif %}
+        </div>
+
+        <div class="success-message">
+            <strong>Sua opinião é muito importante para nós!</strong><br>
+            Agradecemos por ter dedicado seu tempo para responder nossa pesquisa.
+        </div>
+    </div>
+</body>
+</html>

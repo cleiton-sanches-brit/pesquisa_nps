@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
+from datetime import timedelta
 
 
 class Survey(models.Model):
@@ -12,6 +14,10 @@ class Survey(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizada em")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Criado por")
     
+    # Configurações de expiração
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="Expira em")
+    allow_multiple_responses = models.BooleanField(default=False, verbose_name="Permitir múltiplas respostas")
+    
     class Meta:
         verbose_name = "Pesquisa"
         verbose_name_plural = "Pesquisas"
@@ -19,6 +25,114 @@ class Survey(models.Model):
     
     def __str__(self):
         return self.title
+    
+    def is_expired(self):
+        if self.expires_at:
+            return timezone.now() > self.expires_at
+        return False
+
+
+class Respondent(models.Model):
+    """Modelo para cadastro de possíveis respondentes - para Power BI"""
+    STATUS_CHOICES = [
+        ('Ativo', 'Ativo'),
+        ('Inativo', 'Inativo'),
+        ('Bloqueado', 'Bloqueado'),
+        ('Pendente', 'Pendente'),
+    ]
+    
+    email = models.EmailField(unique=True, verbose_name="Email do Usuário")
+    nome_conta = models.CharField(max_length=200, blank=True, verbose_name="Nome da Conta")
+    nome_usuario = models.CharField(max_length=200, blank=True, verbose_name="Nome do Usuário")
+    nome_produto = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nome do Produto")
+    status_usuario = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Ativo', verbose_name="Status do Usuário")
+    notes = models.TextField(blank=True, verbose_name="Observações")
+    active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    
+    class Meta:
+        verbose_name = "Respondente"
+        verbose_name_plural = "Respondentes"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.nome_usuario or 'Sem nome'} ({self.email})"
+
+
+class SurveyInvitation(models.Model):
+    """Modelo para convites únicos por email"""
+    survey = models.ForeignKey(Survey, on_delete=models.CASCADE, related_name='invitations', verbose_name="Pesquisa")
+    email = models.EmailField(verbose_name="Email do Destinatário")
+    unique_token = models.UUIDField(default=uuid.uuid4, unique=True, verbose_name="Token Único")
+    is_used = models.BooleanField(default=False, verbose_name="Já Utilizado")
+    used_at = models.DateTimeField(null=True, blank=True, verbose_name="Utilizado em")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    expires_at = models.DateTimeField(verbose_name="Expira em")
+    
+    # Tracking de email
+    sent_at = models.DateTimeField(null=True, blank=True, verbose_name="Enviado em")
+    opened_at = models.DateTimeField(null=True, blank=True, verbose_name="Aberto em")
+    clicked_at = models.DateTimeField(null=True, blank=True, verbose_name="Link Clicado em")
+    open_count = models.PositiveIntegerField(default=0, verbose_name="Contador de Aberturas")
+    click_count = models.PositiveIntegerField(default=0, verbose_name="Contador de Cliques")
+    
+    class Meta:
+        verbose_name = "Convite de Pesquisa"
+        verbose_name_plural = "Convites de Pesquisa"
+        unique_together = ['survey', 'email']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.survey.title} - {self.email}"
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        return not self.is_used and not self.is_expired()
+    
+    def get_survey_url(self):
+        """Retorna a URL única para responder a pesquisa"""
+        return f"/survey/{self.survey.id}/respond/{self.unique_token}/"
+    
+    def mark_as_used(self):
+        """Marca o convite como utilizado"""
+        self.is_used = True
+        self.used_at = timezone.now()
+        self.save()
+    
+    def mark_as_sent(self):
+        """Marca o convite como enviado"""
+        self.sent_at = timezone.now()
+        self.save()
+    
+    def mark_as_opened(self):
+        """Marca o convite como aberto (email aberto)"""
+        if not self.opened_at:
+            self.opened_at = timezone.now()
+        self.open_count += 1
+        self.save()
+    
+    def mark_as_clicked(self):
+        """Marca o convite como clicado (link clicado)"""
+        if not self.clicked_at:
+            self.clicked_at = timezone.now()
+        self.click_count += 1
+        self.save()
+    
+    def get_status(self):
+        """Retorna status do convite"""
+        if self.is_used:
+            return 'respondido'
+        elif self.clicked_at:
+            return 'clicou_nao_respondeu'
+        elif self.opened_at:
+            return 'abriu_nao_clicou'
+        elif self.sent_at:
+            return 'enviado_nao_abriu'
+        else:
+            return 'nao_enviado'
 
 
 class Question(models.Model):
@@ -65,6 +179,7 @@ class Choice(models.Model):
 class SurveyResponse(models.Model):
     """Modelo para representar uma resposta completa de pesquisa"""
     survey = models.ForeignKey(Survey, on_delete=models.CASCADE, related_name='responses', verbose_name="Pesquisa")
+    invitation = models.ForeignKey(SurveyInvitation, on_delete=models.CASCADE, related_name='response', verbose_name="Convite", null=True, blank=True)
     respondent_id = models.CharField(max_length=100, verbose_name="ID do Respondente")
     respondent_email = models.EmailField(blank=True, verbose_name="Email do Respondente")
     submitted_at = models.DateTimeField(auto_now_add=True, verbose_name="Enviada em")

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard NPS - {{ survey.title|default:"Pesquisas" }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header .subtitle {
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .survey-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .survey-selector select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .card.nps-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .card-title {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .card-subtitle {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .chart-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .calculate-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .table-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Dashboard NPS</h1>
+        <div class="subtitle">Análise de Satisfação e Net Promoter Score</div>
+    </div>
+    
+    <div class="container">
+        {% if surveys %}
+        <div class="survey-selector">
+            <label for="survey-select"><strong>Selecione a Pesquisa:</strong></label>
+            <select id="survey-select" onchange="window.location.href='/nps/dashboard/' + this.value + '/'">
+                <option value="">Todas as Pesquisas</option>
+                {% for s in surveys %}
+                <option value="{{ s.id }}" {% if survey and survey.id == s.id %}selected{% endif %}>
+                    {{ s.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        
+        {% if survey %}
+        <div class="actions">
+            <a href="{% url 'export_nps_excel' survey.id %}" class="btn btn-success">📥 Exportar Excel</a>
+            <a href="{% url 'export_nps_csv' survey.id %}" class="btn btn-secondary">📄 Exportar CSV</a>
+            <button class="btn btn-primary" onclick="showCalculateForm()">📊 Calcular NPS</button>
+        </div>
+        
+        <div id="calculate-form" class="calculate-form" style="display: none;">
+            <h3>Calcular NPS para Período</h3>
+            <form method="post" action="{% url 'nps_calculate' survey.id %}" id="nps-calculate-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data Inicial:</label>
+                        <input type="date" name="period_start" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data Final:</label>
+                        <input type="date" name="period_end" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="force_recalculate"> 
+                        Recalcular mesmo se já existir resultado
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">Calcular</button>
+                <button type="button" class="btn btn-secondary" onclick="hideCalculateForm()">Cancelar</button>
+            </form>
+        </div>
+        
+        <!-- Resumo NPS -->
+        <div class="summary-cards">
+            <div class="card nps-score">
+                <div class="card-title">NPS Score</div>
+                <div class="card-value">{{ summary.nps_score|floatformat:1 }}</div>
+                <div class="card-subtitle">Net Promoter Score</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total de Respostas</div>
+                <div class="card-value">{{ summary.total_responses }}</div>
+                <div class="card-subtitle">Respostas coletadas</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Promotores</div>
+                <div class="card-value" style="color: #28a745;">{{ summary.promoters }}</div>
+                <div class="card-subtitle">{{ summary.promoter_percentage|floatformat:1 }}% (9-10)</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Neutros</div>
+                <div class="card-value" style="color: #ffc107;">{{ summary.passives }}</div>
+                <div class="card-subtitle">{{ summary.passive_percentage|floatformat:1 }}% (7-8)</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Detratores</div>
+                <div class="card-value" style="color: #dc3545;">{{ summary.detractors }}</div>
+                <div class="card-subtitle">{{ summary.detractor_percentage|floatformat:1 }}% (0-6)</div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de Tendência -->
+        <div class="chart-container">
+            <div class="chart-title">📈 Tendência NPS (Últimos 6 Meses)</div>
+            <canvas id="trendChart"></canvas>
+        </div>
+        
+        <!-- Gráfico de Distribuição -->
+        <div class="chart-container">
+            <div class="chart-title">📊 Distribuição de Respostas</div>
+            <canvas id="distributionChart"></canvas>
+        </div>
+        
+        <!-- Tabela de Resultados -->
+        <div class="table-container">
+            <h3 style="margin-bottom: 20px;">Resultados Calculados</h3>
+            {% if recent_results %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Total Respostas</th>
+                        <th>Promotores</th>
+                        <th>Neutros</th>
+                        <th>Detratores</th>
+                        <th>NPS Score</th>
+                        <th>Calculado em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in recent_results %}
+                    <tr>
+                        <td>{{ result.period_start|date:"d/m/Y" }} a {{ result.period_end|date:"d/m/Y" }}</td>
+                        <td>{{ result.total_responses }}</td>
+                        <td><span class="badge badge-success">{{ result.promoters }}</span></td>
+                        <td><span class="badge badge-warning">{{ result.passives }}</span></td>
+                        <td><span class="badge badge-danger">{{ result.detractors }}</span></td>
+                        <td><strong>{{ result.nps_score }}</strong></td>
+                        <td>{{ result.calculated_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>Nenhum resultado NPS calculado ainda. Use o botão "Calcular NPS" para gerar o primeiro resultado.</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="card">
+            <h3>Nenhuma pesquisa encontrada</h3>
+            <p>Crie uma pesquisa primeiro no <a href="/admin/">Admin do Django</a>.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script id="trend-data" type="application/json">{{ trend_data_json|safe }}</script>
+    <script>
+        // Dados para gráficos
+        const trendDataElement = document.getElementById('trend-data');
+        const trendData = trendDataElement ? JSON.parse(trendDataElement.textContent) : [];
+        const summary = {
+            promoters: {{ summary.promoters|default:0 }},
+            passives: {{ summary.passives|default:0 }},
+            detractors: {{ summary.detractors|default:0 }}
+        };
+        
+        // Gráfico de Tendência
+        {% if trend_data %}
+        const trendCtx = document.getElementById('trendChart');
+        if (trendCtx && trendData && trendData.length > 0) {
+            new Chart(trendCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: trendData.map(d => d.period),
+                    datasets: [{
+                        label: 'NPS Score',
+                        data: trendData.map(d => d.nps_score),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            min: -100
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Gráfico de Distribuição
+        const distCtx = document.getElementById('distributionChart');
+        if (distCtx && (summary.promoters > 0 || summary.passives > 0 || summary.detractors > 0)) {
+            new Chart(distCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Promotores', 'Neutros', 'Detratores'],
+                    datasets: [{
+                        data: [summary.promoters, summary.passives, summary.detractors],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+        
+        // Funções do formulário
+        function showCalculateForm() {
+            document.getElementById('calculate-form').style.display = 'block';
+        }
+        
+        function hideCalculateForm() {
+            document.getElementById('calculate-form').style.display = 'none';
+        }
+        
+        // Submeter formulário via AJAX
+        document.getElementById('nps-calculate-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const formAction = this.action;
+            
+            fetch(formAction, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('NPS calculado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + (data.error || 'Erro desconhecido'));
+                }
+            })
+            .catch(error => {
+                alert('Erro ao calcular NPS: ' + error);
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, DECIMAL
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, DECIMAL, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .database import Base
+from database import Base
 
 
 class Survey(Base):
@@ -88,8 +88,8 @@ class NPSResult(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     survey_id = Column(Integer, ForeignKey("surveys_survey.id"))
-    period_start = Column(DateTime, nullable=False)
-    period_end = Column(DateTime, nullable=False)
+    period_start = Column(Date, nullable=False)
+    period_end = Column(Date, nullable=False)
     total_responses = Column(Integer, nullable=False)
     promoters = Column(Integer, nullable=False)
     passives = Column(Integer, nullable=False)

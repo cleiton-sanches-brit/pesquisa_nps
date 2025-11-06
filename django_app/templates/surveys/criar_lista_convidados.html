@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Lista de Convidados - {{ survey.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .info-box h3 {
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card h3 {
+            font-size: 32px;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .warning-box strong {
+            color: #856404;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .email-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .email-item {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .email-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Criar Lista de Convidados</h1>
+            <a href="{% url 'survey_invitations' survey.id %}" class="btn btn-secondary">Voltar</a>
+        </div>
+
+        <div class="info-box">
+            <h3>📋 Como Funciona</h3>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Seleciona aleatoriamente <strong>1/6 (16.67%)</strong> dos emails da tabela de respondentes</li>
+                <li>Exclui automaticamente emails que receberam convite nos <strong>últimos 180 dias</strong></li>
+                <li>Cria convites para a pesquisa selecionada (expira em 30 dias)</li>
+                <li>Você pode enviar os emails depois usando o botão "Enviar Convites"</li>
+            </ul>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ preview.total_respondentes }}</h3>
+                <p>Total de Respondentes</p>
+            </div>
+            <div class="stat-card" style="background: #d4edda;">
+                <h3>{{ preview.total_elegiveis }}</h3>
+                <p>Elegíveis para Convite</p>
+            </div>
+            <div class="stat-card" style="background: #f8d7da;">
+                <h3>{{ preview.total_excluidos }}</h3>
+                <p>Excluídos (últimos 180 dias)</p>
+            </div>
+            <div class="stat-card" style="background: #d1ecf1;">
+                <h3>{{ preview.quantidade_selecionada }}</h3>
+                <p>Serão Selecionados (1/6)</p>
+            </div>
+        </div>
+
+        {% if preview.total_elegiveis == 0 %}
+        <div class="warning-box">
+            <strong>⚠️ Atenção:</strong> Não há emails elegíveis para convite. 
+            Todos os respondentes receberam convite nos últimos 180 dias.
+        </div>
+        {% else %}
+        <div class="warning-box">
+            <strong>ℹ️ Preview:</strong> A lista abaixo mostra os emails que serão selecionados aleatoriamente.
+            Ao confirmar, os convites serão criados mas <strong>não serão enviados automaticamente</strong>.
+            Você precisará usar o botão "Enviar Convites" depois.
+        </div>
+
+        {% if preview.emails_selecionados %}
+        <div class="email-list">
+            <h3 style="margin-bottom: 15px;">Emails que serão selecionados:</h3>
+            {% for email in preview.emails_selecionados %}
+            <div class="email-item">{{ email }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" style="margin-top: 30px;">
+            {% csrf_token %}
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">
+                    ✅ Confirmar e Criar Lista de Convidados
+                </button>
+                <a href="{% url 'survey_invitations' survey.id %}" class="btn btn-secondary">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
+

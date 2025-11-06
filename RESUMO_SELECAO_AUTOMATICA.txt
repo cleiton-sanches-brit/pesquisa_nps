@@ -1,0 +1,178 @@
+================================================================================
+              SISTEMA DE SELEÇÃO AUTOMÁTICA DE CONVIDADOS
+================================================================================
+
+FUNCIONALIDADE
+Sistema automático para selecionar convidados para pesquisas NPS seguindo
+critérios específicos.
+
+================================================================================
+CRITÉRIOS DE SELEÇÃO
+================================================================================
+
+1. SELEÇÃO ALEATÓRIA
+   - Seleciona 1/6 (16.67%) dos emails da tabela surveys_respondent
+   - Seleção é aleatória (randomizada)
+
+2. VALIDAÇÃO DE PERÍODO
+   - Verifica a tabela surveys_invitation
+   - Exclui emails que receberam convite nos últimos 180 dias
+   - Validação considera sent_at (data de envio)
+   - Independente se o convidado respondeu ou não
+
+================================================================================
+COMO USAR
+================================================================================
+
+OPÇÃO 1: VIA INTERFACE WEB (Recomendado)
+
+1. Acesse Django Admin: http://localhost:8000/admin
+2. Vá em "Surveys" > Selecione uma pesquisa
+3. Clique em "Criar Lista Automática" (botão verde)
+4. Visualize o preview da seleção
+5. Clique em "Confirmar e Criar Lista de Convidados"
+6. Os convites serão criados (mas não enviados)
+7. Use "Enviar Convites" para enviar os emails
+
+OPÇÃO 2: VIA PÁGINA DE CONVITES
+
+1. Acesse: http://localhost:8000/survey/{survey_id}/invitations/
+2. Clique no botão "Criar Lista Automática"
+3. Siga o mesmo processo acima
+
+OPÇÃO 3: VIA COMANDO DJANGO (Terminal)
+
+cd django_app
+python manage.py criar_lista_convidados <survey_id>
+
+Exemplo:
+python manage.py criar_lista_convidados 1
+
+Com percentual customizado:
+python manage.py criar_lista_convidados 1 --percentual 0.2
+
+================================================================================
+O QUE O SISTEMA FAZ
+================================================================================
+
+PASSO 1: Buscar Respondentes
+- Busca todos os respondentes ativos na tabela surveys_respondent
+- Conta o total disponível
+
+PASSO 2: Filtrar Elegíveis
+- Busca convites enviados nos últimos 180 dias (qualquer pesquisa)
+- Cria lista de emails excluídos
+- Filtra respondentes que não estão na lista de excluídos
+
+PASSO 3: Seleção Aleatória
+- Calcula 1/6 do total de elegíveis
+- Seleciona aleatoriamente essa quantidade
+- Garante pelo menos 1 email se houver elegíveis
+
+PASSO 4: Criar Convites
+- Cria SurveyInvitation para cada email selecionado
+- Expiração: 30 dias a partir da criação
+- Não envia emails automaticamente
+
+================================================================================
+ESTATÍSTICAS EXIBIDAS
+================================================================================
+
+Ao criar a lista, você verá:
+
+- Total de Respondentes: Todos os respondentes ativos
+- Elegíveis: Emails que podem receber convite (não receberam nos últimos 180 dias)
+- Excluídos: Emails que receberam convite recentemente
+- Serão Selecionados: Quantidade que será selecionada (1/6)
+
+================================================================================
+FLUXO COMPLETO
+================================================================================
+
+1. CRIAR LISTA DE CONVIDADOS
+   - Botão "Criar Lista Automática"
+   - Sistema seleciona aleatoriamente 1/6 dos elegíveis
+   - Cria convites (não envia)
+
+2. ENVIAR CONVITES
+   - Botão "Enviar Convites"
+   - Envia emails para os convites criados
+   - Marca sent_at com data/hora do envio
+
+3. PRÓXIMA SELEÇÃO (1 mês depois)
+   - Sistema verifica sent_at
+   - Se passaram menos de 180 dias -> excluído
+   - Se passaram 180+ dias -> elegível novamente
+
+================================================================================
+EXEMPLO PRÁTICO
+================================================================================
+
+Cenário:
+- Total de respondentes: 600
+- Receberam convite nos últimos 180 dias: 100
+- Elegíveis: 500
+- 1/6 de 500: ~83 emails
+
+Resultado:
+- Sistema seleciona aleatoriamente 83 emails
+- Cria 83 convites
+- Você envia os emails
+- Próxima seleção (1 mês): esses 83 estarão excluídos
+
+================================================================================
+VALIDAÇÕES
+================================================================================
+
+O que o sistema verifica:
+- Respondente está ativo (active=True)
+- Email não recebeu convite nos últimos 180 dias
+- Email não tem convite existente para esta pesquisa
+
+O que o sistema NÃO verifica:
+- Se o convidado respondeu ou não (não importa)
+- Qual pesquisa recebeu (qualquer pesquisa conta)
+- Se o convite foi usado (is_used)
+
+================================================================================
+CASOS DE USO
+================================================================================
+
+ENVIO MENSAL AUTOMATIZADO
+
+Mês 1: Seleciona 1/6 dos 600 = 100 emails
+Mês 2: Seleciona 1/6 dos 500 elegíveis = 83 emails
+Mês 3: Seleciona 1/6 dos 417 elegíveis = 69 emails
+E assim por diante...
+
+Após 6 meses, os emails do mês 1 voltam a ser elegíveis!
+
+================================================================================
+ARQUIVOS CRIADOS
+================================================================================
+
+- surveys/utils_selecao.py - Funções de seleção
+- surveys/views_selecao.py - Views para interface web
+- surveys/management/commands/criar_lista_convidados.py - Comando terminal
+- templates/surveys/criar_lista_convidados.html - Interface de criação
+
+================================================================================
+RESOLUÇÃO DE PROBLEMAS
+================================================================================
+
+Nenhum email elegível
+- Causa: Todos receberam convite nos últimos 180 dias
+- Solução: Aguarde mais tempo ou reduza o período de exclusão
+
+Poucos emails selecionados
+- Causa: Poucos respondentes elegíveis
+- Solução: Verifique se há respondentes ativos e se não receberam convite recente
+
+Email não aparece na lista
+- Causa: Recebeu convite recentemente ou está inativo
+- Solução: Verifique sent_at na tabela surveys_invitation
+
+================================================================================
+                    FIM DO GUIA
+================================================================================
+

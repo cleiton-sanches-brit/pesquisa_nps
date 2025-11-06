@@ -4,8 +4,8 @@ from fastapi.responses import JSONResponse
 import uvicorn
 from dotenv import load_dotenv
 import os
+# Importar routers
 from routers import surveys, responses
-from database import engine, Base
 
 # Load environment variables
 load_dotenv()
@@ -40,11 +40,8 @@ async def root():
 async def health_check():
     return {"status": "healthy", "message": "API is running"}
 
-# Create database tables
-@app.on_event("startup")
-async def startup_event():
-    # Create tables
-    Base.metadata.create_all(bind=engine)
+# Nota: As tabelas são gerenciadas pelo Django através de migrações
+# Não criar tabelas automaticamente aqui para evitar conflitos
 
 if __name__ == "__main__":
     uvicorn.run(

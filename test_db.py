@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""
+Script para testar a conexão com o SQL Server
+"""
+import os
+import pyodbc
+from dotenv import load_dotenv
+
+def test_connection():
+    """Testa a conexão com o SQL Server"""
+    print("Testando conexão com SQL Server...")
+    
+    # Carregar variáveis de ambiente
+    load_dotenv()
+    
+    # Obter configurações do banco
+    server = os.getenv('DB_HOST', 'localhost')
+    database = os.getenv('DB_NAME', 'nps_surveys')
+    username = os.getenv('DB_USER', '')
+    password = os.getenv('DB_PASSWORD', '')
+    port = os.getenv('DB_PORT', '1433')
+    
+    print(f"Servidor: {server}")
+    print(f"Banco: {database}")
+    print(f"Usuario: {username}")
+    print(f"Porta: {port}")
+    
+    if not username or not password:
+        print("ERRO: Usuario ou senha do banco nao configurados no arquivo .env")
+        return False
+    
+    try:
+        # String de conexão
+        connection_string = (
+            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+            f"SERVER={server},{port};"
+            f"DATABASE={database};"
+            f"UID={username};"
+            f"PWD={password};"
+            f"TrustServerCertificate=yes;"
+        )
+        
+        print("Tentando conectar...")
+        
+        # Tentar conectar
+        connection = pyodbc.connect(connection_string)
+        cursor = connection.cursor()
+        
+        # Testar consulta simples
+        cursor.execute("SELECT @@VERSION")
+        version = cursor.fetchone()[0]
+        
+        print("SUCESSO: Conexão estabelecida!")
+        print(f"Versão do SQL Server: {version[:50]}...")
+        
+        # Fechar conexão
+        cursor.close()
+        connection.close()
+        
+        return True
+        
+    except pyodbc.Error as e:
+        print(f"ERRO de conexão: {e}")
+        return False
+    except Exception as e:
+        print(f"ERRO inesperado: {e}")
+        return False
+
+if __name__ == "__main__":
+    print("Teste de Conexão SQL Server")
+    print("=" * 40)
+    
+    success = test_connection()
+    
+    if success:
+        print("\nTeste concluído com sucesso!")
+        print("O banco está pronto para uso.")
+    else:
+        print("\nDicas para resolver problemas:")
+        print("1. Verifique se o SQL Server está rodando")
+        print("2. Confirme as credenciais no arquivo .env")
+        print("3. Verifique se o ODBC Driver 17 está instalado")
+        print("4. Teste a conectividade de rede")
+

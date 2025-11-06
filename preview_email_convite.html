@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview - Email de Convite para Pesquisa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .preview-header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+            margin-bottom: 0;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .preview-note {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-note">
+        <strong>📧 PREVIEW DO EMAIL DE CONVITE</strong><br>
+        Esta é uma visualização prévia do email que será enviado aos convidados.<br>
+        <small>Dados de exemplo utilizados para demonstração</small>
+    </div>
+
+    <!-- AQUI COMEÇA O EMAIL REAL -->
+    <div class="header">
+        <h1>Pesquisa de Satisfação</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Olá!</h2>
+        
+        <p>Você foi convidado(a) para participar da pesquisa:</p>
+        
+        <h3>Pesquisa de Satisfação com o Produto XYZ</h3>
+        
+        <p>Gostaríamos de conhecer sua opinião sobre a experiência com <strong>Produto ABC</strong>. Seu feedback é essencial para melhorarmos continuamente.</p>
+        
+        <p>Levará apenas alguns minutos para responder.</p>
+        
+        <div style="text-align: center;">
+            <a href="http://localhost:8000/survey/1/respond/550e8400-e29b-41d4-a716-446655440000/" class="button">Responder Pesquisa</a>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Importante:</strong>
+            <ul>
+                <li>Este link é único e pessoal</li>
+                <li>Após responder, o link não funcionará mais</li>
+                <li>O link expira em: 29/11/2025 14:30</li>
+            </ul>
+        </div>
+        
+        <p>Se você não conseguir clicar no botão, copie e cole o link abaixo no seu navegador:</p>
+        <div class="info-box">
+            http://localhost:8000/track/link/click/550e8400-e29b-41d4-a716-446655440000/
+        </div>
+    </div>
+    
+    <!-- Pixel de tracking para abertura de email (invisível) -->
+    <img src="http://localhost:8000/track/email/open/550e8400-e29b-41d4-a716-446655440000/" width="1" height="1" style="display:none;" alt="" />
+    
+    <div class="footer">
+        <p>Esta é uma mensagem automática. Por favor, não responda este email.</p>
+        <p>Se você não solicitou esta pesquisa, pode ignorar este email.</p>
+    </div>
+
+    <!-- Informações técnicas (não aparecem no email real) -->
+    <div class="preview-note" style="margin-top: 30px;">
+        <strong>ℹ️ Informações Técnicas:</strong><br>
+        <small>
+            • O pixel de tracking (linha acima) é invisível e permite rastrear quando o email foi aberto<br>
+            • O link do botão "Responder Pesquisa" redireciona através de uma URL de tracking que registra o clique<br>
+            • Após o clique, o usuário é redirecionado para a página de resposta da pesquisa<br>
+            • O sistema rastreia: envio, abertura, clique e resposta
+        </small>
+    </div>
+</body>
+</html>
+

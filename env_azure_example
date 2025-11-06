@@ -1,0 +1,16 @@
+# Configurações para Azure SQL Server
+SECRET_KEY=+yrkvd)9n%+g&7zc6v)%_-+yr%b)cu@7a1-5n*x()she+!2m9q
+DEBUG=False
+ALLOWED_HOSTS=localhost,127.0.0.1,seu-dominio.com
+
+# Azure SQL Server Settings
+AZURE_DB_HOST=seu-servidor-azure.database.windows.net
+AZURE_DB_PORT=1433
+AZURE_DB_NAME=seu_banco_azure
+AZURE_DB_USER=seu_usuario_azure
+AZURE_DB_PASSWORD=sua_senha_azure
+
+# API Settings
+DJANGO_API_URL=http://localhost:8000
+FASTAPI_URL=http://localhost:8001
+

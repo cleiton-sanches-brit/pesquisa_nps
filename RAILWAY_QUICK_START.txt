@@ -1,0 +1,92 @@
+================================================================================
+  QUICK START - RAILWAY DEPLOY
+================================================================================
+
+PASSO 1: CRIAR PROJETO
+================================================================================
+
+1. Acesse: https://railway.app
+2. Faça login com GitHub
+3. Clique em "+ New Project" (canto superior direito)
+4. Escolha "Deploy from GitHub repo"
+5. Autorize Railway (se primeira vez)
+6. Selecione: cleiton-sanches-brit/pesquisa_nps
+7. Clique em "Deploy"
+
+================================================================================
+PASSO 2: ENCONTRAR VARIABLES
+================================================================================
+
+1. Clique no NOME DO PROJETO (não no workspace)
+2. Clique na aba "Settings" (no topo)
+3. Role a página até encontrar "Variables"
+4. Clique em "+ New Variable"
+
+================================================================================
+PASSO 3: ADICIONAR VARIÁVEIS
+================================================================================
+
+Adicione uma por uma:
+
+SECRET_KEY = (gere com: python -c "import secrets; print(secrets.token_urlsafe(50))")
+DEBUG = False
+ALLOWED_HOSTS = *.railway.app
+CSRF_TRUSTED_ORIGINS = https://*.railway.app
+
+DB_HOST = aws-1-us-east-2.pooler.supabase.com
+DB_PORT = 6543
+DB_NAME = postgres
+DB_USER = postgres.pzumhkxjasqntwujdztg
+DB_PASSWORD = Pds2025@@
+
+EMAIL_HOST = smtp.gmail.com
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = seu-email@gmail.com
+EMAIL_HOST_PASSWORD = sua-senha-de-app
+DEFAULT_FROM_EMAIL = seu-email@gmail.com
+
+================================================================================
+PASSO 4: REDEPLOY
+================================================================================
+
+1. Vá em "Deployments"
+2. Clique nos três pontinhos (⋯) no último deploy
+3. Selecione "Redeploy"
+
+OU simplesmente faça um novo commit no GitHub
+
+================================================================================
+PASSO 5: OBTER URL
+================================================================================
+
+1. Vá em "Settings"
+2. Seção "Networking" ou "Domains"
+3. Copie a URL (ex: https://seu-app.railway.app)
+4. Atualize ALLOWED_HOSTS com a URL real
+
+================================================================================
+LOCALIZAÇÃO DAS COISAS
+================================================================================
+
+Workspace (nível superior)
+  └── Projeto pesquisa_nps (clique aqui!)
+       ├── Deployments (aba)
+       ├── Settings (aba) ← VARIABLES ESTÁ AQUI
+       ├── Metrics (aba)
+       └── Logs (aba)
+
+================================================================================
+SE NÃO ENCONTRAR
+================================================================================
+
+1. Certifique-se de ter clicado no PROJETO (não no workspace)
+2. Procure pela aba "Settings" no topo
+3. Role a página Settings até encontrar "Variables"
+4. Se ainda não encontrar, tente:
+   - Atualizar a página (F5)
+   - Verificar se o projeto foi criado corretamente
+   - Tentar criar um novo projeto
+
+================================================================================
+

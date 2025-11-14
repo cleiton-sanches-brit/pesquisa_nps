@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 from dotenv import load_dotenv
 import os
-from routers import surveys, responses
+from routers import surveys, responses, email
 from database import engine, Base
 
 # Load environment variables
@@ -31,6 +31,7 @@ app.add_middleware(
 # Include routers
 app.include_router(surveys.router, prefix="/api/v1", tags=["surveys"])
 app.include_router(responses.router, prefix="/api/v1", tags=["responses"])
+app.include_router(email.router, prefix="/api/v1", tags=["email"])
 
 @app.get("/")
 async def root():

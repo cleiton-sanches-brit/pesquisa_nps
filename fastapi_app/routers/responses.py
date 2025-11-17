@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import SurveyResponse, Answer, Survey, Question
+from models import SurveyResponse as SurveyResponseModel, Answer as AnswerModel, Survey as SurveyModel, Question as QuestionModel
 from schemas import SurveyResponse, SurveyResponseCreate, SurveyResponsePublic
 
 router = APIRouter()
@@ -17,18 +17,18 @@ async def create_response(
     """Cria uma nova resposta de pesquisa (endpoint público)"""
     
     # Verificar se a pesquisa existe e está ativa
-    survey = db.query(Survey).filter(
-        Survey.id == response.survey_id,
-        Survey.is_active == True
+    survey = db.query(SurveyModel).filter(
+        SurveyModel.id == response.survey_id,
+        SurveyModel.is_active == True
     ).first()
     
     if not survey:
         raise HTTPException(status_code=404, detail="Pesquisa não encontrada ou inativa")
     
     # Verificar se já existe resposta com o mesmo respondent_id
-    existing_response = db.query(SurveyResponse).filter(
-        SurveyResponse.survey_id == response.survey_id,
-        SurveyResponse.respondent_id == response.respondent_id
+    existing_response = db.query(SurveyResponseModel).filter(
+        SurveyResponseModel.survey_id == response.survey_id,
+        SurveyResponseModel.respondent_id == response.respondent_id
     ).first()
     
     if existing_response:
@@ -42,7 +42,7 @@ async def create_response(
     user_agent = request.headers.get("user-agent", "")
     
     # Criar a resposta
-    db_response = SurveyResponse(
+    db_response = SurveyResponseModel(
         survey_id=response.survey_id,
         respondent_id=response.respondent_id,
         respondent_email=response.respondent_email,
@@ -56,9 +56,9 @@ async def create_response(
     # Criar as respostas individuais
     for answer_data in response.answers:
         # Verificar se a pergunta existe na pesquisa
-        question = db.query(Question).filter(
-            Question.id == answer_data.question_id,
-            Question.survey_id == response.survey_id
+        question = db.query(QuestionModel).filter(
+            QuestionModel.id == answer_data.question_id,
+            QuestionModel.survey_id == response.survey_id
         ).first()
         
         if not question:
@@ -74,7 +74,7 @@ async def create_response(
                 detail=f"Pergunta '{question.question_text}' é obrigatória"
             )
         
-        db_answer = Answer(
+        db_answer = AnswerModel(
             response_id=db_response.id,
             question_id=answer_data.question_id,
             answer_text=answer_data.answer_text,
@@ -96,10 +96,10 @@ async def get_responses(
     db: Session = Depends(get_db)
 ):
     """Lista respostas de pesquisas (endpoint administrativo)"""
-    query = db.query(SurveyResponse)
+    query = db.query(SurveyResponseModel)
     
     if survey_id:
-        query = query.filter(SurveyResponse.survey_id == survey_id)
+        query = query.filter(SurveyResponseModel.survey_id == survey_id)
     
     responses = query.offset(skip).limit(limit).all()
     return responses
@@ -108,7 +108,7 @@ async def get_responses(
 @router.get("/responses/{response_id}", response_model=SurveyResponse)
 async def get_response(response_id: int, db: Session = Depends(get_db)):
     """Obtém uma resposta específica por ID"""
-    response = db.query(SurveyResponse).filter(SurveyResponse.id == response_id).first()
+    response = db.query(SurveyResponseModel).filter(SurveyResponseModel.id == response_id).first()
     
     if not response:
         raise HTTPException(status_code=404, detail="Resposta não encontrada")
@@ -124,13 +124,13 @@ async def get_survey_responses(
     db: Session = Depends(get_db)
 ):
     """Lista todas as respostas de uma pesquisa específica"""
-    survey = db.query(Survey).filter(Survey.id == survey_id).first()
+    survey = db.query(SurveyModel).filter(SurveyModel.id == survey_id).first()
     
     if not survey:
         raise HTTPException(status_code=404, detail="Pesquisa não encontrada")
     
-    responses = db.query(SurveyResponse).filter(
-        SurveyResponse.survey_id == survey_id
+    responses = db.query(SurveyResponseModel).filter(
+        SurveyResponseModel.survey_id == survey_id
     ).offset(skip).limit(limit).all()
     
     return responses
@@ -139,7 +139,7 @@ async def get_survey_responses(
 @router.delete("/responses/{response_id}")
 async def delete_response(response_id: int, db: Session = Depends(get_db)):
     """Remove uma resposta"""
-    response = db.query(SurveyResponse).filter(SurveyResponse.id == response_id).first()
+    response = db.query(SurveyResponseModel).filter(SurveyResponseModel.id == response_id).first()
     
     if not response:
         raise HTTPException(status_code=404, detail="Resposta não encontrada")

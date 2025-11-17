@@ -1,0 +1,611 @@
+================================================================================
+  DIAGRAMA DE ARQUITETURA - SISTEMA NPS SURVEYS NO AZURE
+================================================================================
+
+DIAGRAMA 1: ARQUITETURA COMPLETA NO AZURE (RECOMENDADA)
+================================================================================
+
+                    ┌─────────────────────────┐
+                    │   INTERNET/USUÁRIOS     │
+                    │  👥 Usuários/Convidados │
+                    └────────────┬────────────┘
+                                 │
+                                 │ HTTPS
+                                 ▼
+                    ┌─────────────────────────┐
+                    │      AZURE DNS          │
+                    │  seudominio.com         │
+                    │  Registros A, CNAME, MX │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+                    ▼                         ▼
+        ┌──────────────────┐      ┌──────────────────┐
+        │  AZURE APP       │      │  AZURE APP       │
+        │  SERVICE         │      │  SERVICE         │
+        │  (Django)        │      │  (FastAPI)       │
+        │                  │      │                  │
+        │  - Web App       │      │  - API Service   │
+        │  - Admin Panel   │      │  - REST API      │
+        │  - API REST      │      │  - Analytics     │
+        │  - HTTPS/SSL     │      │  - Auto-scaling  │
+        │  - Auto-scaling  │      │                  │
+        └────────┬─────────┘      └────────┬─────────┘
+                 │                         │
+                 └────────────┬────────────┘
+                              │
+                              ▼
+                 ┌──────────────────────────┐
+                 │  AZURE DATABASE FOR      │
+                 │  POSTGRESQL              │
+                 │                          │
+                 │  - Surveys               │
+                 │  - Responses             │
+                 │  - Invitations           │
+                 │  - Respondents           │
+                 │  - Backup automático     │
+                 │  - Alta disponibilidade   │
+                 │  - Escalabilidade        │
+                 └────────────┬─────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │                   │
+                    ▼                   ▼
+        ┌──────────────────┐  ┌──────────────────┐
+        │  AZURE           │  │  AZURE           │
+        │  COMMUNICATION   │  │  STORAGE         │
+        │  SERVICES        │  │                  │
+        │  (EMAIL)         │  │  - Arquivos      │
+        │  ou SENDGRID     │  │    estáticos     │
+        │                  │  │  - Logs          │
+        │  - Envio de      │  │  - Backups       │
+        │    convites      │  │                  │
+        │  - Tracking      │  └──────────────────┘
+        │  - Analytics     │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │  USUÁRIOS        │
+        │  (Recebem emails)│
+        └──────────────────┘
+
+        ┌──────────────────┐
+        │  AZURE KEY VAULT │
+        │  (Secrets)       │
+        └──────────────────┘
+                 ▲
+                 │
+        ┌────────┴─────────┐
+        │  Django/FastAPI │
+        └─────────────────┘
+
+        ┌──────────────────┐
+        │  APPLICATION     │
+        │  INSIGHTS        │
+        │  (Monitoring)    │
+        └──────────────────┘
+                 ▲
+                 │
+        ┌────────┴─────────┐
+        │  Django/FastAPI │
+        └─────────────────┘
+
+================================================================================
+DIAGRAMA 2: ARQUITETURA HÍBRIDA (AZURE + HOSTGATOR)
+================================================================================
+
+                    ┌─────────────────────────┐
+                    │   INTERNET/USUÁRIOS     │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+                    ▼                         ▼
+        ┌──────────────────┐      ┌──────────────────┐
+        │  AZURE DNS       │      │  HOSTGATOR DNS   │
+        │  (App Domain)    │      │  (Email Domain)  │
+        └────────┬─────────┘      └────────┬─────────┘
+                 │                         │
+                 ▼                         ▼
+        ┌──────────────────┐      ┌──────────────────┐
+        │  AZURE APP       │      │  EMAIL MX        │
+        │  SERVICE         │      │  RECORDS         │
+        │  (Django/FastAPI)│      │  (Caixas         │
+        └────────┬─────────┘      │   Corporativas)  │
+                 │                └──────────────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │  AZURE DATABASE  │
+        │  POSTGRESQL      │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │  SENDGRID        │
+        │  (Envio emails)  │
+        └────────┬─────────┘
+                 │
+                 ▼
+        ┌──────────────────┐
+        │  USUÁRIOS        │
+        │  (Recebem emails)│
+        └──────────────────┘
+
+================================================================================
+DIAGRAMA 3: FLUXO DE ENVIO DE CONVITES (SEQUÊNCIA)
+================================================================================
+
+Admin → Django → Database → SendGrid → Usuário
+
+1. Admin cria/envia convites
+   │
+   ▼
+2. Django busca Survey & Respondents no Database
+   │
+   ▼
+3. Django cria SurveyInvitation no Database
+   │
+   ▼
+4. Django gera Token Único
+   │
+   ▼
+5. Django renderiza Template HTML do email
+   │
+   ▼
+6. Django envia email via SendGrid API
+   │
+   ▼
+7. SendGrid entrega email ao Usuário
+   │
+   ▼
+8. Usuário clica no link do email
+   │
+   ▼
+9. Django valida Token no Database
+   │
+   ▼
+10. Django mostra Formulário de Pesquisa
+    │
+    ▼
+11. Usuário envia Resposta
+    │
+    ▼
+12. Django salva SurveyResponse no Database
+    │
+    ▼
+13. Django mostra Página de Agradecimento
+
+================================================================================
+DIAGRAMA 4: ARQUITETURA DE SEGURANÇA
+================================================================================
+
+                    ┌─────────────────────────┐
+                    │   INTERNET               │
+                    │  👥 Usuários Legítimos   │
+                    │  🤖 Bots/Maliciosos      │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+                    ▼                         ▼
+        ┌──────────────────┐      ┌──────────────────┐
+        │  AZURE WAF       │      │  DDoS PROTECTION │
+        │  (Web App        │      │  (Proteção       │
+        │   Firewall)      │      │   Automática)    │
+        └────────┬─────────┘      └────────┬─────────┘
+                 │                         │
+                 └────────────┬────────────┘
+                              │
+                              ▼
+                 ┌──────────────────────────┐
+                 │  AZURE FIREWALL          │
+                 │  (Network Security)      │
+                 └────────────┬─────────────┘
+                              │
+                              ▼
+                 ┌──────────────────────────┐
+                 │  AZURE APP SERVICE       │
+                 │  (Django/FastAPI)        │
+                 └────────────┬─────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │                   │
+                    ▼                   ▼
+        ┌──────────────────┐  ┌──────────────────┐
+        │  AZURE KEY VAULT │  │  AZURE DATABASE  │
+        │  (Secrets)       │  │  (Encrypted)     │
+        └──────────────────┘  └──────────────────┘
+
+================================================================================
+DIAGRAMA 5: FLUXO DE DADOS COMPLETO
+================================================================================
+
+INPUT LAYER:
+    ┌──────────────┐      ┌──────────────┐
+    │ Admin Panel  │      │  REST API    │
+    └──────┬───────┘      └──────┬───────┘
+           │                     │
+           └──────────┬──────────┘
+                      │
+                      ▼
+PROCESSING LAYER:
+    ┌──────────────┐      ┌──────────────┐
+    │   Django     │      │   FastAPI    │
+    │ Business     │      │  Analytics   │
+    │   Logic      │      │              │
+    └──────┬───────┘      └──────┬───────┘
+           │                     │
+           └──────────┬──────────┘
+                      │
+                      ▼
+STORAGE LAYER:
+    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+    │  PostgreSQL  │  │ Blob Storage │  │ Redis Cache  │
+    │ Structured   │  │ Files & Logs │  │  Sessions    │
+    │    Data      │  │              │  │              │
+    └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+           │                 │                 │
+           └─────────┬───────┴─────────────────┘
+                     │
+                     ▼
+OUTPUT LAYER:
+    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+    │ Email Service│  │  Dashboard   │  │   Reports    │
+    │   (SendGrid) │  │   (NPS)      │  │  (Analytics) │
+    └──────────────┘  └──────────────┘  └──────────────┘
+
+================================================================================
+DIAGRAMA 6: COMPARAÇÃO DE ARQUITETURAS
+================================================================================
+
+OPÇÃO 1: 100% AZURE (RECOMENDADO)
+─────────────────────────────────────────────────────────
+    Azure DNS
+        │
+        ▼
+    Azure App Service (Django/FastAPI)
+        │
+        ├──► Azure Database PostgreSQL
+        │
+        └──► Azure Communication Services Email
+             ou SendGrid
+
+Custo: ~$43-48/mês
+Vantagem: Tudo integrado, fácil gerenciamento
+
+
+OPÇÃO 2: AZURE + HOSTGATOR (HÍBRIDO)
+─────────────────────────────────────────────────────────
+    HostGator DNS/Email
+        │
+        └──► (Emails corporativos)
+    
+    Azure DNS
+        │
+        ▼
+    Azure App Service (Django/FastAPI)
+        │
+        ├──► Azure Database PostgreSQL
+        │
+        └──► SendGrid (Emails transacionais)
+
+Custo: ~$41-43/mês
+Vantagem: Emails corporativos baratos no HostGator
+
+
+OPÇÃO 3: AZURE + SUPABASE (ATUAL)
+─────────────────────────────────────────────────────────
+    Azure DNS
+        │
+        ▼
+    Azure App Service (Django/FastAPI)
+        │
+        ├──► Supabase Database (PostgreSQL)
+        │
+        └──► SendGrid (Emails transacionais)
+
+Custo: ~$13-28/mês (Supabase gratuito até limite)
+Vantagem: Banco de dados gratuito, já configurado
+
+================================================================================
+COMPONENTES DETALHADOS
+================================================================================
+
+1. AZURE APP SERVICE (Django)
+   ─────────────────────────────────────────────────────
+   - Tipo: Linux App Service
+   - Runtime: Python 3.12
+   - Tier: B1 Basic (~$13/mês)
+   - Recursos:
+     * 1.75 GB RAM
+     * 1 vCPU
+     * 10 GB Storage
+   - Recursos Adicionais:
+     * Auto-scaling
+     * HTTPS/SSL gratuito
+     * Deploy automático (GitHub)
+     * Logs e monitoramento
+
+
+2. AZURE APP SERVICE (FastAPI)
+   ─────────────────────────────────────────────────────
+   - Tipo: Linux App Service
+   - Runtime: Python 3.12
+   - Tier: B1 Basic (~$13/mês)
+   - Mesmas características do Django
+
+
+3. AZURE DATABASE FOR POSTGRESQL
+   ─────────────────────────────────────────────────────
+   - Tipo: Flexible Server
+   - Tier: Basic (~$25/mês)
+   - Recursos:
+     * 2 vCores
+     * 5 GB RAM
+     * 32 GB Storage
+   - Recursos Adicionais:
+     * Backup automático (7 dias)
+     * Alta disponibilidade (opcional)
+     * Escalabilidade automática
+
+
+4. AZURE COMMUNICATION SERVICES EMAIL
+   ─────────────────────────────────────────────────────
+   - Tipo: Pay-as-you-go
+   - Custo: ~$0.0001 por email
+   - Recursos:
+     * Envio ilimitado
+     * Tracking de abertura
+     * Analytics
+     * Templates HTML
+   - Alternativa: SendGrid (gratuito até 100/dia)
+
+
+5. AZURE DNS
+   ─────────────────────────────────────────────────────
+   - Tipo: Zone DNS
+   - Custo: ~$0.50/mês por zona
+   - Recursos:
+     * Registros A, CNAME, MX, TXT
+     * Anycast (alta performance)
+     * Integração com Azure
+
+
+6. AZURE KEY VAULT
+   ─────────────────────────────────────────────────────
+   - Tipo: Standard
+   - Custo: ~$0.03/10.000 operações
+   - Recursos:
+     * Armazenamento seguro de secrets
+     * Rotação automática
+     * Integração com App Service
+
+
+7. APPLICATION INSIGHTS
+   ─────────────────────────────────────────────────────
+   - Tipo: Pay-as-you-go
+   - Custo: ~$2.30/GB de dados
+   - Recursos:
+     * Logs em tempo real
+     * Métricas de performance
+     * Alertas automáticos
+     * Dashboards
+
+================================================================================
+FLUXO DE REQUISIÇÃO COMPLETO
+================================================================================
+
+1. USUÁRIO ACESSA O SISTEMA
+   ─────────────────────────────────────────────────────
+   Usuário → DNS (seudominio.com) → Azure App Service (Django)
+   
+   
+2. DJANGO PROCESSA REQUISIÇÃO
+   ─────────────────────────────────────────────────────
+   Django → Azure Key Vault (buscar secrets)
+   Django → Azure Database (buscar dados)
+   Django → Azure Storage (servir arquivos estáticos)
+   
+   
+3. ENVIO DE EMAIL
+   ─────────────────────────────────────────────────────
+   Django → SendGrid/Azure Communication Services
+   SendGrid → Usuário (email entregue)
+   
+   
+4. TRACKING E MONITORAMENTO
+   ─────────────────────────────────────────────────────
+   Django → Application Insights (logs)
+   SendGrid → Application Insights (métricas de email)
+
+================================================================================
+CONFIGURAÇÃO DE REDE
+================================================================================
+
+AZURE DNS CONFIGURATION:
+─────────────────────────────────────────────────────────
+Registro A:
+    seudominio.com → IP do App Service
+
+Registro CNAME:
+    www.seudominio.com → seudominio.azurewebsites.net
+
+Registro MX (se usar HostGator):
+    seudominio.com → mail.hostgator.com (prioridade 10)
+
+Registro TXT (SPF):
+    seudominio.com → "v=spf1 include:sendgrid.net ~all"
+
+Registro TXT (DKIM):
+    seudominio.com → (chave DKIM do SendGrid)
+
+
+FIREWALL RULES:
+─────────────────────────────────────────────────────────
+Azure Database:
+    - Permitir: IP do App Service
+    - Bloquear: Todo o resto
+
+App Service:
+    - Permitir: Internet (HTTPS)
+    - Bloquear: Acesso direto (apenas via DNS)
+
+================================================================================
+ESCALABILIDADE
+================================================================================
+
+ESCALA VERTICAL (Aumentar recursos):
+─────────────────────────────────────────────────────────
+App Service:
+    B1 → B2 → B3 → S1 → S2 → S3
+    (Mais CPU e RAM)
+
+Database:
+    Basic → General Purpose → Memory Optimized
+    (Mais performance)
+
+
+ESCALA HORIZONTAL (Múltiplas instâncias):
+─────────────────────────────────────────────────────────
+App Service:
+    1 instância → 2 → 3 → N instâncias
+    (Load Balancer automático)
+
+Database:
+    1 servidor → + Read Replicas
+    (Distribuir leitura)
+
+================================================================================
+SEGURANÇA
+================================================================================
+
+CAMADAS DE SEGURANÇA:
+─────────────────────────────────────────────────────────
+1. Azure WAF (Web Application Firewall)
+   - Proteção contra SQL Injection
+   - Proteção contra XSS
+   - Rate limiting
+
+2. DDoS Protection
+   - Proteção automática
+   - Mitigação de ataques
+
+3. Azure Firewall
+   - Controle de tráfego de rede
+   - Filtragem de IPs
+
+4. Azure Key Vault
+   - Secrets criptografados
+   - Rotação automática
+
+5. HTTPS/SSL
+   - Certificados gratuitos (App Service)
+   - TLS 1.2+ obrigatório
+
+6. Database Encryption
+   - Dados em repouso criptografados
+   - Conexões SSL obrigatórias
+
+================================================================================
+MONITORAMENTO E LOGS
+================================================================================
+
+APPLICATION INSIGHTS:
+─────────────────────────────────────────────────────────
+- Logs de aplicação em tempo real
+- Métricas de performance (CPU, RAM, requisições)
+- Alertas automáticos
+- Dashboards personalizados
+- Rastreamento de erros
+- Análise de dependências
+
+MÉTRICAS MONITORADAS:
+─────────────────────────────────────────────────────────
+- Requisições por segundo
+- Tempo de resposta
+- Taxa de erro
+- Uso de CPU e memória
+- Conexões de banco de dados
+- Emails enviados/recebidos
+- Disponibilidade do serviço
+
+================================================================================
+BACKUP E RECUPERAÇÃO
+================================================================================
+
+AZURE DATABASE:
+─────────────────────────────────────────────────────────
+- Backup automático diário
+- Retenção: 7-35 dias (configurável)
+- Point-in-time restore
+- Backup geográfico (opcional)
+
+AZURE STORAGE:
+─────────────────────────────────────────────────────────
+- Backup automático de arquivos
+- Versionamento
+- Soft delete
+- Replicação geográfica (opcional)
+
+APP SERVICE:
+─────────────────────────────────────────────────────────
+- Backup automático do código
+- Restore de versões anteriores
+- Deployment slots (staging/prod)
+
+================================================================================
+CUSTOS DETALHADOS (MENSAL)
+================================================================================
+
+CENÁRIO 1: 100% AZURE
+─────────────────────────────────────────────────────────
+Azure App Service (B1):              $13.00
+Azure Database PostgreSQL (Basic):   $25.00
+Azure Communication Email:            $5.00
+Azure DNS:                            $0.50
+Azure Key Vault:                      $0.10
+Application Insights:                 $2.00
+Azure Storage:                         $1.00
+─────────────────────────────────────────────────────────
+TOTAL:                               ~$46.60/mês
+
+
+CENÁRIO 2: AZURE + HOSTGATOR
+─────────────────────────────────────────────────────────
+Azure App Service (B1):              $13.00
+Azure Database PostgreSQL (Basic):   $25.00
+SendGrid (gratuito até 100/dia):     $0.00
+HostGator Email:                      $4.00
+Azure DNS:                            $0.50
+Azure Key Vault:                      $0.10
+Application Insights:                 $2.00
+─────────────────────────────────────────────────────────
+TOTAL:                               ~$44.60/mês
+
+
+CENÁRIO 3: AZURE + SUPABASE (ATUAL)
+─────────────────────────────────────────────────────────
+Azure App Service (B1):              $13.00
+Supabase Database (gratuito):         $0.00
+SendGrid (gratuito até 100/dia):     $0.00
+Azure DNS:                            $0.50
+Azure Key Vault:                      $0.10
+Application Insights:                 $2.00
+─────────────────────────────────────────────────────────
+TOTAL:                               ~$15.60/mês
+
+================================================================================
+CONCLUSÃO
+================================================================================
+
+✅ AZURE CONSEGUE HOSPEDAR TUDO: SIM
+❌ PRECISA HOSTGATOR: NÃO (opcional apenas para emails corporativos)
+
+ARQUITETURA RECOMENDADA: 100% Azure
+CUSTO ESTIMADO: ~$43-48/mês (ou ~$15-16/mês com Supabase)
+
+================================================================================
+

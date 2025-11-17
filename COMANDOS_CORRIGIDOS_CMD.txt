@@ -1,0 +1,81 @@
+================================================================================
+    COMANDOS CORRIGIDOS - RESOLVER ERRO "No module named 'whitenoise'"
+================================================================================
+
+O erro ocorre porque falta instalar as dependencias.
+Siga estes comandos na ordem:
+
+================================================================================
+COMANDO 1: Abrir o CMD
+================================================================================
+
+- Pressione: Windows + R
+- Digite: cmd
+- Pressione: Enter
+
+================================================================================
+COMANDO 2: Ir para o diretório do projeto
+================================================================================
+
+Digite exatamente:
+
+cd /d C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\pesquisas_nps
+
+Pressione: Enter
+
+================================================================================
+COMANDO 3: Instalar dependências
+================================================================================
+
+Digite exatamente:
+
+venv\Scripts\python.exe -m pip install whitenoise gunicorn
+
+Pressione: Enter
+
+Aguarde a instalação terminar (pode demorar alguns segundos)
+
+================================================================================
+COMANDO 4: Entrar na pasta django_app
+================================================================================
+
+Digite exatamente:
+
+cd django_app
+
+Pressione: Enter
+
+================================================================================
+COMANDO 5: Iniciar o servidor
+================================================================================
+
+Digite exatamente:
+
+..\venv\Scripts\python.exe manage.py runserver
+
+Pressione: Enter
+
+================================================================================
+RESULTADO ESPERADO
+================================================================================
+
+Você deve ver:
+
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
+================================================================================
+SE AINDA DER ERRO
+================================================================================
+
+Instale TODAS as dependências de uma vez:
+
+cd /d C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\pesquisas_nps
+venv\Scripts\python.exe -m pip install -r requirements.txt
+
+Isso instalará todas as dependências necessárias.
+
+================================================================================
+                    FIM
+================================================================================
+

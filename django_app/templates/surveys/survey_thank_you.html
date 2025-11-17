@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obrigado! - {{ survey.title }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 700px;
+            width: 100%;
+            padding: 50px 40px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 100px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        h1 {
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+        .message {
+            color: #666;
+            font-size: 20px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .survey-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .survey-info h2 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        .survey-info p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .response-info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .response-info p {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .success-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .success-box h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .success-box p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🎉</div>
+        <h1>Obrigado pela Sua Resposta!</h1>
+        <p class="message">
+            Sua opinião é muito importante para nós e nos ajudará a melhorar continuamente.
+        </p>
+
+        <div class="survey-info">
+            <h2>{{ survey.title }}</h2>
+            {% if survey.description %}
+            <p>{{ survey.description }}</p>
+            {% endif %}
+        </div>
+
+        <div class="response-info">
+            <p><strong>Resposta registrada com sucesso!</strong></p>
+            {% if response %}
+            <p>ID da Resposta: <span class="highlight">#{{ response.id }}</span></p>
+            <p>Data: <span class="highlight">{{ response.submitted_at|date:"d/m/Y H:i" }}</span></p>
+            {% endif %}
+        </div>
+
+        <div class="success-box">
+            <h3>✨ Sua participação faz a diferença!</h3>
+            <p>
+                Analisaremos suas respostas cuidadosamente e utilizaremos seu feedback 
+                para criar uma experiência ainda melhor.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -11,9 +11,14 @@ pydantic==2.5.0
 python-multipart==0.0.6
 email-validator==2.1.0
 
-# SQL Server
+# SQL Server (mantido para compatibilidade)
 pyodbc==5.0.1
 django-mssql-backend==2.8.1
+
+# PostgreSQL (Supabase)
+psycopg2-binary==2.9.9
+
+# SQLAlchemy
 sqlalchemy==2.0.23
 
 # PostgreSQL (Supabase)
@@ -36,6 +41,15 @@ pytest==7.4.3
 pytest-django==4.7.0
 black==23.11.0
 flake8==6.1.0
+
+# Exportação (para preview de emails)
+weasyprint==60.2
+
+# Servidor WSGI para produção
+gunicorn==21.2.0
+
+# Servir arquivos estáticos em produção
+whitenoise==6.6.0
 
 # Segurança
 cryptography==42.0.8

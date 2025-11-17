@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import Survey, Question, Choice
-from schemas import Survey, SurveyCreate, Question, QuestionCreate
+from models import Survey as SurveyModel, Question as QuestionModel, Choice as ChoiceModel
+from schemas import Survey, SurveyCreate, Question, QuestionCreate, Choice, ChoiceCreate
 
 router = APIRouter()
 
@@ -16,10 +16,10 @@ async def get_surveys(
     db: Session = Depends(get_db)
 ):
     """Lista todas as pesquisas disponíveis"""
-    query = db.query(Survey)
+    query = db.query(SurveyModel)
     
     if is_active is not None:
-        query = query.filter(Survey.is_active == is_active)
+        query = query.filter(SurveyModel.is_active == is_active)
     
     surveys = query.offset(skip).limit(limit).all()
     return surveys
@@ -28,7 +28,7 @@ async def get_surveys(
 @router.get("/surveys/{survey_id}", response_model=Survey)
 async def get_survey(survey_id: int, db: Session = Depends(get_db)):
     """Obtém uma pesquisa específica por ID"""
-    survey = db.query(Survey).filter(Survey.id == survey_id).first()
+    survey = db.query(SurveyModel).filter(SurveyModel.id == survey_id).first()
     
     if not survey:
         raise HTTPException(status_code=404, detail="Pesquisa não encontrada")
@@ -40,10 +40,11 @@ async def get_survey(survey_id: int, db: Session = Depends(get_db)):
 async def create_survey(survey: SurveyCreate, db: Session = Depends(get_db)):
     """Cria uma nova pesquisa"""
     # Criar a pesquisa
-    db_survey = Survey(
+    db_survey = SurveyModel(
         title=survey.title,
         description=survey.description,
-        is_active=survey.is_active
+        is_active=survey.is_active,
+        created_by_id=1  # TODO: Obter do contexto de autenticação
     )
     db.add(db_survey)
     db.commit()
@@ -51,7 +52,7 @@ async def create_survey(survey: SurveyCreate, db: Session = Depends(get_db)):
     
     # Criar as perguntas
     for question_data in survey.questions:
-        db_question = Question(
+        db_question = QuestionModel(
             survey_id=db_survey.id,
             question_text=question_data.question_text,
             question_type=question_data.question_type,
@@ -64,7 +65,7 @@ async def create_survey(survey: SurveyCreate, db: Session = Depends(get_db)):
         
         # Criar as opções se existirem
         for choice_data in question_data.choices:
-            db_choice = Choice(
+            db_choice = ChoiceModel(
                 question_id=db_question.id,
                 choice_text=choice_data.choice_text,
                 value=choice_data.value,
@@ -84,7 +85,7 @@ async def update_survey(
     db: Session = Depends(get_db)
 ):
     """Atualiza uma pesquisa existente"""
-    db_survey = db.query(Survey).filter(Survey.id == survey_id).first()
+    db_survey = db.query(SurveyModel).filter(SurveyModel.id == survey_id).first()
     
     if not db_survey:
         raise HTTPException(status_code=404, detail="Pesquisa não encontrada")
@@ -95,11 +96,11 @@ async def update_survey(
     db_survey.is_active = survey.is_active
     
     # Remover perguntas antigas
-    db.query(Question).filter(Question.survey_id == survey_id).delete()
+    db.query(QuestionModel).filter(QuestionModel.survey_id == survey_id).delete()
     
     # Criar novas perguntas
     for question_data in survey.questions:
-        db_question = Question(
+        db_question = QuestionModel(
             survey_id=survey_id,
             question_text=question_data.question_text,
             question_type=question_data.question_type,
@@ -112,7 +113,7 @@ async def update_survey(
         
         # Criar as opções
         for choice_data in question_data.choices:
-            db_choice = Choice(
+            db_choice = ChoiceModel(
                 question_id=db_question.id,
                 choice_text=choice_data.choice_text,
                 value=choice_data.value,
@@ -128,7 +129,7 @@ async def update_survey(
 @router.delete("/surveys/{survey_id}")
 async def delete_survey(survey_id: int, db: Session = Depends(get_db)):
     """Remove uma pesquisa"""
-    db_survey = db.query(Survey).filter(Survey.id == survey_id).first()
+    db_survey = db.query(SurveyModel).filter(SurveyModel.id == survey_id).first()
     
     if not db_survey:
         raise HTTPException(status_code=404, detail="Pesquisa não encontrada")

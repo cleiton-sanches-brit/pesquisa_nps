@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ survey.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .survey-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .survey-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        .question {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .nps-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .nps-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        .nps-option input[type="radio"] {
+            margin-bottom: 5px;
+            transform: scale(1.2);
+        }
+        .nps-option label {
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .choice-option {
+            margin: 10px 0;
+        }
+        .choice-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .text-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .submit-button {
+            background-color: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .submit-button:hover {
+            background-color: #218838;
+        }
+        .required {
+            color: red;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="survey-container">
+        <div class="survey-header">
+            <h1>{{ survey.title }}</h1>
+            {% if survey.description %}
+            <p>{{ survey.description }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Importante:</strong> Este link é único e pessoal. Após enviar sua resposta, o link deixará de funcionar.
+        </div>
+        
+          <form method="post">
+              {% csrf_token %}
+              <!-- Honeypot field para proteção contra spam (deve ficar vazio) -->
+              <input type="text" name="website" style="display:none;" tabindex="-1" autocomplete="off">
+            
+            {% for question in survey.questions.all %}
+            <div class="question">
+                <div class="question-text">
+                    {{ question.question_text }}
+                    {% if question.is_required %}<span class="required">*</span>{% endif %}
+                </div>
+                
+                {% if question.question_type == 'nps' %}
+                <div class="nps-scale">
+                    <div style="font-size: 12px; color: #666;">Muito Improvável</div>
+                    {% for i in "0123456789"|make_list %}
+                    <div class="nps-option">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ i }}" id="q{{ question.id }}_{{ i }}" required>
+                        <label for="q{{ question.id }}_{{ i }}">{{ i }}</label>
+                    </div>
+                    {% endfor %}
+                    <div class="nps-option">
+                        <input type="radio" name="question_{{ question.id }}" value="10" id="q{{ question.id }}_10" required>
+                        <label for="q{{ question.id }}_10">10</label>
+                    </div>
+                    <div style="font-size: 12px; color: #666;">Muito Provável</div>
+                </div>
+                
+                {% elif question.question_type == 'choice' %}
+                {% for choice in question.choices.all %}
+                <div class="choice-option" style="display: flex; align-items: center; margin: 10px 0;">
+                    <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}" id="q{{ question.id }}_{{ choice.id }}" {% if question.is_required %}required{% endif %} style="width: 18px; height: 18px; margin-right: 10px; cursor: pointer;">
+                    <label for="q{{ question.id }}_{{ choice.id }}" style="cursor: pointer; font-size: 16px;">{{ choice.choice_text }}</label>
+                </div>
+                {% endfor %}
+                
+                {% elif question.question_type == 'rating' %}
+                <div class="nps-scale">
+                    <div style="font-size: 12px; color: #666;">Muito Insatisfeito</div>
+                    {% for i in "12345"|make_list %}
+                    <div class="nps-option">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ i }}" id="q{{ question.id }}_{{ i }}" {% if question.is_required %}required{% endif %}>
+                        <label for="q{{ question.id }}_{{ i }}">{{ i }}</label>
+                    </div>
+                    {% endfor %}
+                    <div style="font-size: 12px; color: #666;">Muito Satisfeito</div>
+                </div>
+                
+                {% elif question.question_type == 'text' %}
+                <textarea name="question_{{ question.id }}_text" class="text-input" rows="4" {% if question.is_required %}required{% endif %} placeholder="Digite sua resposta aqui..."></textarea>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="submit-button">Enviar Resposta</button>
+        </form>
+    </div>
+    
+    <script>
+        // Validação do formulário
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const requiredQuestions = document.querySelectorAll('input[required], textarea[required]');
+            let allAnswered = true;
+            
+            requiredQuestions.forEach(function(input) {
+                if (!input.value && !input.checked) {
+                    allAnswered = false;
+                    input.style.borderColor = 'red';
+                } else {
+                    input.style.borderColor = '';
+                }
+            });
+            
+            if (!allAnswered) {
+                e.preventDefault();
+                alert('Por favor, responda todas as perguntas obrigatórias.');
+            }
+        });
+    </script>
+</body>
+</html>
+

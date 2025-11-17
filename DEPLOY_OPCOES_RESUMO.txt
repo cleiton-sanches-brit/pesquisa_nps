@@ -1,0 +1,85 @@
+================================================================================
+  RESUMO: OPÇÕES DE DEPLOY
+================================================================================
+
+OPÇÃO 1: RENDER.COM (RECOMENDADO - GRATUITO)
+================================================================================
+
+✅ 100% Gratuito
+✅ Deploy automático do GitHub
+✅ Suporta PostgreSQL (Supabase)
+✅ HTTPS automático
+✅ Interface fácil
+⚠️ Pode hibernar após 15min (mas acorda rápido)
+
+GUIA COMPLETO: DEPLOY_RENDER.md
+
+PASSO A PASSO RÁPIDO:
+1. Acesse: https://render.com
+2. Crie conta com GitHub
+3. New → Web Service
+4. Conecte repositório: pesquisa_nps
+5. Configure:
+   - Build: pip install -r requirements.txt
+   - Start: cd django_app && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn nps_admin.wsgi:application --bind 0.0.0.0:$PORT
+6. Adicione variáveis de ambiente
+7. Deploy automático!
+
+================================================================================
+OPÇÃO 2: HOSTGATOR
+================================================================================
+
+⚠️ Requer plano com suporte a Python
+⚠️ Pode precisar usar MySQL (não PostgreSQL)
+⚠️ Configuração mais complexa
+⚠️ Upload manual de arquivos
+
+GUIA COMPLETO: DEPLOY_HOSTGATOR.md
+
+NOTA: Se seu plano Hostgator não suportar Python bem, considere Render.com
+
+================================================================================
+OPÇÃO 3: OUTRAS ALTERNATIVAS GRATUITAS
+================================================================================
+
+- Fly.io: Gratuito, rápido, requer CLI
+- PythonAnywhere: Gratuito, especializado em Python, MySQL no plano gratuito
+
+GUIA COMPLETO: ALTERNATIVAS_GRATUITAS.md
+
+================================================================================
+RECOMENDAÇÃO FINAL
+================================================================================
+
+🎯 USE RENDER.COM
+
+Por quê?
+- É gratuito
+- É fácil
+- Suporta tudo que precisamos
+- Deploy automático
+- Funciona muito bem com Django
+
+Tempo estimado: 10-15 minutos do início ao fim!
+
+================================================================================
+ARQUIVOS NECESSÁRIOS (JÁ TEMOS TUDO!)
+================================================================================
+
+✅ Procfile - Comando de inicialização
+✅ requirements.txt - Dependências
+✅ runtime.txt - Versão Python
+✅ settings.py - Configurado para produção
+✅ WhiteNoise - Para arquivos estáticos
+✅ Gunicorn - Servidor WSGI
+
+================================================================================
+PRÓXIMO PASSO
+================================================================================
+
+1. Abra: DEPLOY_RENDER.md
+2. Siga o guia passo a passo
+3. Em 15 minutos seu app estará no ar! 🚀
+
+================================================================================
+

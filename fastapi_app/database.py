@@ -7,22 +7,25 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Database configuration
+# Database configuration - PostgreSQL (Supabase)
 DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_PORT = os.getenv('DB_PORT', '1433')
-DB_NAME = os.getenv('DB_NAME', 'nps_surveys')
-DB_USER = os.getenv('DB_USER', '')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('DB_NAME', 'postgres')
+DB_USER = os.getenv('DB_USER', 'postgres')
 DB_PASSWORD = os.getenv('DB_PASSWORD', '')
 
-# Create connection string
-DATABASE_URL = f"mssql+pyodbc://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?driver=ODBC+Driver+17+for+SQL+Server"
+# Create connection string for PostgreSQL
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Create engine
 engine = create_engine(
     DATABASE_URL,
-    echo=True,  # Set to False in production
+    echo=False,  # Set to False in production
     pool_pre_ping=True,
-    pool_recycle=300
+    pool_recycle=300,
+    connect_args={
+        "sslmode": "require"  # Para Supabase
+    }
 )
 
 # Create session factory

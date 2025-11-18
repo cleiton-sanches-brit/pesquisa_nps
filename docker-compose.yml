@@ -15,38 +15,40 @@ services:
     networks:
       - nps_network
 
-  # Django Admin Application
+  # Django Dashboard Application
   django:
     build:
       context: .
-      dockerfile: django_app/Dockerfile
+      dockerfile: dashboard/Dockerfile
     container_name: nps_django
     environment:
       - DEBUG=True
       - DB_HOST=db
       - DB_PORT=1433
-      - DB_NAME=nps_surveys
+      - DB_NAME=survey_analytics
       - DB_USER=sa
       - DB_PASSWORD=YourStrong@Passw0rd
+      - SECRET_KEY=django-insecure-docker-dev-key-change-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
     ports:
       - "8000:8000"
     depends_on:
       - db
     volumes:
-      - ./django_app:/app
+      - ./dashboard:/app
     networks:
       - nps_network
 
-  # FastAPI Application
+  # FastAPI Collector Application
   fastapi:
     build:
       context: .
-      dockerfile: fastapi_app/Dockerfile
+      dockerfile: collector/Dockerfile
     container_name: nps_fastapi
     environment:
       - DB_HOST=db
       - DB_PORT=1433
-      - DB_NAME=nps_surveys
+      - DB_NAME=survey_analytics
       - DB_USER=sa
       - DB_PASSWORD=YourStrong@Passw0rd
     ports:
@@ -54,7 +56,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./fastapi_app:/app
+      - ./collector:/app
     networks:
       - nps_network
 

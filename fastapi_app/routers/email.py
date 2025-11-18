@@ -128,3 +128,4 @@ async def send_template_email_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao enviar email com template: {str(e)}")
 
+

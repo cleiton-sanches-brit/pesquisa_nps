@@ -74,17 +74,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nps_admin.wsgi.application'
 
-# Database - Supabase PostgreSQL
+# Database - Azure SQL Server
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'postgres'),
-        'USER': os.getenv('DB_USER', 'postgres'),
+        'ENGINE': 'mssql',
+        'NAME': os.getenv('DB_NAME', 'dbNPS'),
+        'USER': os.getenv('DB_USER', 'user-nps'),
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'HOST': os.getenv('DB_HOST', '172.190.157.142'),
+        'PORT': os.getenv('DB_PORT', '1433'),
         'OPTIONS': {
-            'sslmode': 'require',
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'extra_params': 'TrustServerCertificate=yes',  # Para Azure SQL
         },
         'CONN_MAX_AGE': 600,  # 10 minutos
     }
@@ -182,10 +183,18 @@ REST_FRAMEWORK = {
 }
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+# Usar SendGrid se API key estiver configurada, caso contrário usar SMTP
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+if SENDGRID_API_KEY:
+    # Usar backend customizado SendGrid via API
+    EMAIL_BACKEND = 'surveys.email_backend.SendGridEmailBackend'
+    DEFAULT_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', 'no-reply@m4law.com.br')
+else:
+    # Fallback para SMTP tradicional
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'apikey')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@m4law.com.br')

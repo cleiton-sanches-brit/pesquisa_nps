@@ -12,13 +12,13 @@ from pathlib import Path
 def run_django():
     """Executa o servidor Django"""
     print("🐍 Iniciando Django (porta 8000)...")
-    os.chdir("django_app")
+    os.chdir("dashboard")
     subprocess.run([sys.executable, "manage.py", "runserver", "0.0.0.0:8000"])
 
 def run_fastapi():
     """Executa o servidor FastAPI"""
     print("⚡ Iniciando FastAPI (porta 8001)...")
-    os.chdir("fastapi_app")
+    os.chdir("collector")
     subprocess.run([sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"])
 
 def main():

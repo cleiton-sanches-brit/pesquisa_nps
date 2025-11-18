@@ -88,12 +88,12 @@ def run_django_migrations():
         python_cmd = "venv/bin/python"
     
     # Criar migrações
-    stdout, stderr = run_command(f"{python_cmd} manage.py makemigrations", cwd="django_app")
+    stdout, stderr = run_command(f"{python_cmd} manage.py makemigrations", cwd="dashboard")
     if stderr and "ERROR" in stderr:
         print(f"⚠️  Aviso nas migrações: {stderr}")
     
     # Aplicar migrações
-    stdout, stderr = run_command(f"{python_cmd} manage.py migrate", cwd="django_app")
+    stdout, stderr = run_command(f"{python_cmd} manage.py migrate", cwd="dashboard")
     if stderr and "ERROR" in stderr:
         print(f"⚠️  Aviso nas migrações: {stderr}")
     
@@ -111,7 +111,7 @@ def create_superuser():
     # Verificar se já existe superusuário
     stdout, stderr = run_command(
         f"{python_cmd} manage.py shell -c \"from django.contrib.auth.models import User; print('Superuser exists' if User.objects.filter(is_superuser=True).exists() else 'No superuser')\"",
-        cwd="django_app",
+        cwd="dashboard",
         check=False
     )
     

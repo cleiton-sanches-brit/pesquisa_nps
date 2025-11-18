@@ -65,3 +65,4 @@ Veja o guia completo em: `docs/SENDGRID_EMAIL_GUIDE.md`
 
 Veja exemplos práticos em: `examples/email_example.py`
 
+

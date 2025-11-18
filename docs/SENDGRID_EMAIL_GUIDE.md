@@ -303,3 +303,4 @@ Verifique seu plano em: https://sendgrid.com/pricing/
 - [SendGrid API Documentation](https://docs.sendgrid.com/api-reference)
 - [Dynamic Templates](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates)
 
+

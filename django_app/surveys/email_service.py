@@ -96,3 +96,4 @@ def send_template_email_django(
         bcc_emails=bcc_emails
     )
 
+

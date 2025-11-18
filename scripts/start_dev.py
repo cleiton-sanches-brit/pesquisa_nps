@@ -54,8 +54,8 @@ def main():
     
     # Executar migrações do Django
     print("🔄 Executando migrações do Django...")
-    run_command("python manage.py makemigrations", cwd="django_app")
-    run_command("python manage.py migrate", cwd="django_app")
+    run_command("python manage.py makemigrations", cwd="dashboard")
+    run_command("python manage.py migrate", cwd="dashboard")
     
     print("✅ Ambiente configurado com sucesso!")
     print("\n📋 Próximos passos:")

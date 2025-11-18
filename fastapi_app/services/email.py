@@ -96,3 +96,4 @@ def send_template_email(
         bcc_emails=bcc_emails
     )
 
+

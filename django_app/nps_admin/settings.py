@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'nps_admin.wsgi.application'
 # Database - Azure SQL Server
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
+        'ENGINE': 'sql_server.pyodbc',
         'NAME': os.getenv('DB_NAME', 'dbNPS'),
         'USER': os.getenv('DB_USER', 'user-nps'),
         'PASSWORD': os.getenv('DB_PASSWORD', ''),

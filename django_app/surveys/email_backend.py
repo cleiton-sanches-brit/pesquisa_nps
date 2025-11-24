@@ -111,3 +111,4 @@ class SendGridEmailBackend(BaseEmailBackend):
         
         return num_sent
 
+

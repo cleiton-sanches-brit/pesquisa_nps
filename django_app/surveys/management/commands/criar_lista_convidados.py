@@ -60,3 +60,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.ERROR(f"❌ Erro: {resultado.get('erro', 'Erro desconhecido')}"))
 
+
+
+

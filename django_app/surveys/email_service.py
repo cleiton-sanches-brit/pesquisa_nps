@@ -97,3 +97,4 @@ def send_template_email_django(
     )
 
 
+

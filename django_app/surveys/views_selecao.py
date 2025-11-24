@@ -69,3 +69,6 @@ def preview_selecao_convidados(request, survey_id):
         'emails_selecionados': resultado['emails_selecionados']
     })
 
+
+
+

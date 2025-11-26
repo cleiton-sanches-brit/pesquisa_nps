@@ -11,18 +11,15 @@ pydantic==2.5.0
 python-multipart==0.0.6
 email-validator==2.1.0
 
-# SQL Server (mantido para compatibilidade)
+# SQL Server (Azure SQL)
 pyodbc==5.0.1
 django-mssql-backend==2.8.1
 
-# PostgreSQL (Supabase)
+# PostgreSQL (opcional - Supabase)
 psycopg2-binary==2.9.9
 
 # SQLAlchemy
 sqlalchemy==2.0.23
-
-# PostgreSQL (Supabase)
-psycopg2-binary==2.9.9
 
 # Utilitários
 python-dotenv==1.0.0

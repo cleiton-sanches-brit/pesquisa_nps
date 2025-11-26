@@ -1,0 +1,299 @@
+================================================================================
+    GUIA PASSO A PASSO - DEPLOY VIA GITHUB ACTIONS
+    Azure WebApp Service + GitHub Actions
+================================================================================
+
+Este guia mostra EXATAMENTE como configurar o deploy automático via GitHub Actions.
+
+================================================================================
+RESUMO DO ÚLTIMO PASSO REALIZADO
+================================================================================
+
+✅ ARQUIVOS CRIADOS:
+1. .github/workflows/azure-deploy.yml - Workflow do GitHub Actions
+2. startup.sh - Script de inicialização do Azure
+3. .deployment - Configuração de deployment
+4. deploy_azure.ps1 - Script PowerShell auxiliar
+5. GUIA_DEPLOY_RAPIDO.txt - Guia geral de deploy
+
+✅ AJUSTES REALIZADOS:
+- settings.py atualizado para detectar Azure automaticamente
+- requirements.txt limpo e otimizado
+- Configuração de ALLOWED_HOSTS e CSRF_TRUSTED_ORIGINS para Azure
+
+================================================================================
+PASSO 1: CRIAR APP SERVICE NO AZURE
+================================================================================
+
+1.1. Acesse o Azure Portal
+    URL: https://portal.azure.com
+
+1.2. Criar App Service
+    - Clique em "Criar um recurso"
+    - Busque por "App Service"
+    - Clique em "Criar"
+
+1.3. Configurar Básico
+    - Subscription: Selecione sua assinatura
+    - Resource Group: Selecione ou crie um novo
+    - Name: pesquisas-nps (ou outro nome disponível)
+    - Publish: Code
+    - Runtime stack: Python 3.12
+    - Operating System: Linux
+    - Region: Mesma região do banco de dados SQL
+
+1.4. Configurar Plano
+    - Linux Plan: Selecione ou crie um novo
+    - SKU and size: B1 Basic (recomendado para início)
+    - Clique em "Revisar + criar"
+    - Clique em "Criar"
+    - Aguarde a criação (2-3 minutos)
+
+================================================================================
+PASSO 2: OBTER PUBLISH PROFILE
+================================================================================
+
+2.1. No App Service criado, vá em "Overview" (Visão geral)
+
+2.2. Clique em "Get publish profile" (Obter perfil de publicação)
+    - Isso baixará um arquivo XML
+
+2.3. IMPORTANTE: Você precisará do conteúdo deste arquivo para o próximo passo
+
+================================================================================
+PASSO 3: CONFIGURAR SECRET NO GITHUB
+================================================================================
+
+3.1. Acesse seu repositório no GitHub
+    - cleiton-sanches-brit/pesquisa_nps
+    - OU britsoftware/PesquisaNPS
+
+3.2. Vá em Settings → Secrets and variables → Actions
+
+3.3. Clique em "New repository secret"
+
+3.4. Configure:
+    - Name: AZURE_WEBAPP_PUBLISH_PROFILE
+    - Secret: Cole o CONTEÚDO COMPLETO do arquivo XML baixado no passo 2
+    - Clique em "Add secret"
+
+⚠️ IMPORTANTE: O secret deve conter TODO o conteúdo do XML, não apenas parte dele.
+
+================================================================================
+PASSO 4: CONFIGURAR WORKFLOW DO GITHUB ACTIONS
+================================================================================
+
+4.1. Editar o arquivo .github/workflows/azure-deploy.yml
+
+4.2. Alterar a linha 10:
+    AZURE_WEBAPP_NAME: pesquisas-nps
+    ⚠️ ALTERE para o nome EXATO do seu App Service criado no passo 1
+
+4.3. Salvar e fazer commit:
+    git add .github/workflows/azure-deploy.yml
+    git commit -m "Configurar deploy automático para Azure"
+    git push origin main
+
+================================================================================
+PASSO 5: CONFIGURAR VARIÁVEIS DE AMBIENTE NO AZURE
+================================================================================
+
+5.1. No Azure Portal, vá no App Service criado
+
+5.2. Vá em "Configuration" → "Application settings"
+
+5.3. Adicione as seguintes variáveis (clique em "+ New application setting" para cada uma):
+
+    Nome: SECRET_KEY
+    Valor: [Gere uma nova chave Django]
+    Como gerar: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+    Nome: DEBUG
+    Valor: False
+
+    Nome: ALLOWED_HOSTS
+    Valor: pesquisas-nps.azurewebsites.net
+    ⚠️ ALTERE para o nome do seu App Service
+
+    Nome: CSRF_TRUSTED_ORIGINS
+    Valor: https://pesquisas-nps.azurewebsites.net
+    ⚠️ ALTERE para o nome do seu App Service
+
+    Nome: DB_HOST
+    Valor: seu-servidor.database.windows.net
+    ⚠️ ALTERE para o host do seu banco SQL Azure
+
+    Nome: DB_PORT
+    Valor: 1433
+
+    Nome: DB_NAME
+    Valor: dbNPS
+
+    Nome: DB_USER
+    Valor: user-nps
+
+    Nome: DB_PASSWORD
+    Valor: [sua senha do banco]
+
+    Nome: SENDGRID_API_KEY
+    Valor: [sua-api-key-do-sendgrid]
+
+    Nome: SENDGRID_FROM_EMAIL
+    Valor: no-reply@br-itsoftware.com.br
+
+5.4. Clique em "Save" (Salvar) no topo da página
+    - Aguarde a aplicação reiniciar (1-2 minutos)
+
+================================================================================
+PASSO 6: CONFIGURAR STARTUP COMMAND NO AZURE
+================================================================================
+
+6.1. No App Service, vá em "Configuration" → "General settings"
+
+6.2. Configure:
+    - Startup Command: startup.sh
+    - Working Directory: (deixe vazio ou /home/site/wwwroot/django_app)
+
+6.3. Clique em "Save"
+    - Aguarde a aplicação reiniciar
+
+================================================================================
+PASSO 7: CONFIGURAR FIREWALL DO BANCO DE DADOS
+================================================================================
+
+7.1. No Azure Portal, vá no seu SQL Server (não no banco, no SERVIDOR)
+
+7.2. Vá em "Security" → "Networking"
+
+7.3. Configure:
+    - Allow Azure services and resources to access this server: YES (SIM)
+    - Adicione os IPs de saída do App Service:
+      * No App Service → Properties → Outbound IP addresses
+      * Copie todos os IPs listados
+      * Adicione cada um no firewall do SQL Server
+
+7.4. Clique em "Save"
+
+================================================================================
+PASSO 8: FAZER PRIMEIRO DEPLOY
+================================================================================
+
+8.1. O workflow do GitHub Actions será executado automaticamente quando você:
+    - Fizer push para a branch main
+    - OU clicar em "Run workflow" no GitHub Actions
+
+8.2. Verificar o deploy:
+    - No GitHub, vá em "Actions"
+    - Clique no workflow "Deploy to Azure App Service"
+    - Veja os logs em tempo real
+
+8.3. Aguardar conclusão:
+    - O deploy pode levar 5-10 minutos na primeira vez
+    - Você verá mensagens de progresso nos logs
+
+8.4. Verificar se funcionou:
+    - Acesse: https://pesquisas-nps.azurewebsites.net
+    - ⚠️ ALTERE para o nome do seu App Service
+    - Se aparecer erro, veja os logs em App Service → Log stream
+
+================================================================================
+PASSO 9: VERIFICAR E TESTAR
+================================================================================
+
+9.1. Verificar Logs
+    - App Service → Log stream
+    - Veja se há erros
+
+9.2. Executar Migrations (se necessário)
+    - App Service → SSH (ou Console)
+    - cd django_app
+    - python manage.py migrate
+
+9.3. Testar Funcionalidades
+    - Acesse a URL do App Service
+    - Teste envio de email
+    - Teste formulário de pesquisa
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ERRO: "Publish profile not found"
+→ Verifique se o secret AZURE_WEBAPP_PUBLISH_PROFILE está configurado corretamente
+→ O conteúdo deve ser o XML completo, não apenas parte
+
+ERRO: "App Service not found"
+→ Verifique se o nome no workflow (linha 10) está correto
+→ O nome deve ser EXATAMENTE igual ao criado no Azure
+
+ERRO: "Connection timeout" no banco
+→ Verifique o firewall do SQL Server
+→ Adicione os IPs de saída do App Service
+→ Ative "Allow Azure services"
+
+ERRO 500 na aplicação
+→ Verifique os logs: App Service → Log stream
+→ Verifique se todas as variáveis de ambiente estão configuradas
+→ Verifique se o startup.sh tem permissão de execução
+
+DEPLOY FALHA NO GITHUB ACTIONS
+→ Veja os logs completos em GitHub → Actions
+→ Verifique se o caminho do projeto está correto
+→ Verifique se o requirements.txt está na raiz do projeto
+
+================================================================================
+ESTRUTURA DE ARQUIVOS IMPORTANTES
+================================================================================
+
+pesquisas_nps/
+├── .github/
+│   └── workflows/
+│       └── azure-deploy.yml      ← Workflow do GitHub Actions
+├── django_app/                  ← Aplicação Django
+│   ├── manage.py
+│   ├── nps_admin/
+│   └── surveys/
+├── startup.sh                   ← Script de inicialização
+├── .deployment                  ← Configuração de deployment
+├── requirements.txt             ← Dependências Python
+└── runtime.txt                  ← Versão do Python
+
+================================================================================
+CHECKLIST FINAL
+================================================================================
+
+Antes de fazer deploy, verifique:
+
+[ ] App Service criado no Azure
+[ ] Publish Profile baixado
+[ ] Secret AZURE_WEBAPP_PUBLISH_PROFILE configurado no GitHub
+[ ] Nome do App Service atualizado no workflow (linha 10)
+[ ] Todas as variáveis de ambiente configuradas no Azure
+[ ] Startup command configurado (startup.sh)
+[ ] Firewall do banco de dados configurado
+[ ] Workflow commitado e pushado para GitHub
+[ ] Primeiro deploy executado
+[ ] Aplicação testada e funcionando
+
+================================================================================
+PRÓXIMOS PASSOS APÓS DEPLOY
+================================================================================
+
+1. Configurar domínio customizado (opcional)
+2. Configurar SSL/HTTPS (já vem configurado por padrão)
+3. Configurar monitoramento e alertas
+4. Configurar backup automático
+5. Otimizar performance conforme necessário
+
+================================================================================
+CONTATO E SUPORTE
+================================================================================
+
+Para mais informações:
+- INSTRUCOES_AZURE_APP_SERVICE.txt - Instruções completas do Azure
+- GUIA_DEPLOY_RAPIDO.txt - Guia rápido geral
+- Azure Portal: https://portal.azure.com
+- GitHub Actions: https://github.com/[seu-usuario]/[seu-repo]/actions
+
+================================================================================
+

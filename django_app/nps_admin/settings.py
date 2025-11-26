@@ -14,12 +14,20 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-temporary-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-# ALLOWED_HOSTS - suporta Railway e outros ambientes
+# ALLOWED_HOSTS - suporta Azure, Railway e outros ambientes
 ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 if ALLOWED_HOSTS_ENV:
     ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',')]
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Adiciona domínio do Azure App Service automaticamente
+WEBSITE_HOSTNAME = os.getenv('WEBSITE_HOSTNAME')  # Variável do Azure
+if WEBSITE_HOSTNAME:
+    ALLOWED_HOSTS.append(WEBSITE_HOSTNAME)
+    # Adiciona também sem o .azurewebsites.net para domínios customizados
+    if '.azurewebsites.net' in WEBSITE_HOSTNAME:
+        ALLOWED_HOSTS.append(WEBSITE_HOSTNAME.replace('.azurewebsites.net', ''))
 
 # Adiciona domínio do Railway automaticamente se estiver rodando no Railway
 RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
@@ -143,6 +151,13 @@ if CSRF_TRUSTED_ORIGINS_ENV:
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS_ENV.split(',')]
 else:
     CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
+
+# Adiciona domínio do Azure App Service automaticamente
+WEBSITE_HOSTNAME = os.getenv('WEBSITE_HOSTNAME')  # Variável do Azure
+if WEBSITE_HOSTNAME:
+    azure_origin = f'https://{WEBSITE_HOSTNAME}'
+    if azure_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(azure_origin)
 
 # Adiciona domínio do Railway automaticamente se estiver rodando no Railway
 RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')

@@ -1,0 +1,210 @@
+================================================================================
+    GUIA RÁPIDO DE DEPLOY - AZURE APP SERVICE
+    Sistema de Pesquisas NPS
+================================================================================
+
+Este guia fornece instruções rápidas para fazer deploy no Azure App Service.
+
+================================================================================
+OPÇÃO 1: DEPLOY AUTOMÁTICO VIA GITHUB (RECOMENDADO)
+================================================================================
+
+1. CRIAR APP SERVICE NO AZURE PORTAL
+   - Acesse: https://portal.azure.com
+   - Criar um recurso → App Service
+   - Configurar:
+     * Nome: pesquisas-nps (ou outro disponível)
+     * Runtime: Python 3.12
+     * OS: Linux
+     * Região: Mesma do banco de dados
+
+2. CONFIGURAR DEPLOYMENT CENTER
+   - No App Service → Deployment Center
+   - Source: GitHub
+   - Autorizar GitHub
+   - Selecionar repositório: cleiton-sanches-brit/pesquisa_nps (ou britsoftware/PesquisaNPS)
+   - Branch: main
+   - Build Provider: GitHub Actions
+   - Salvar
+
+3. CONFIGURAR VARIÁVEIS DE AMBIENTE
+   - App Service → Configuration → Application settings
+   - Adicionar todas as variáveis (ver INSTRUCOES_AZURE_APP_SERVICE.txt)
+
+4. CONFIGURAR STARTUP COMMAND
+   - App Service → Configuration → General settings
+   - Startup Command: startup.sh
+   - Working Directory: /home/site/wwwroot/django_app
+   - Salvar
+
+5. PRIMEIRO DEPLOY
+   - O Azure criará automaticamente um workflow do GitHub Actions
+   - Aguarde o deploy completar (pode levar 5-10 minutos)
+   - Verifique os logs em: Deployment Center → Logs
+
+================================================================================
+OPÇÃO 2: DEPLOY MANUAL VIA AZURE CLI
+================================================================================
+
+1. INSTALAR AZURE CLI
+   - Download: https://aka.ms/installazurecliwindows
+   - Ou via PowerShell: winget install -e --id Microsoft.AzureCLI
+
+2. FAZER LOGIN
+   az login
+
+3. CRIAR APP SERVICE (se ainda não criou)
+   az webapp create \
+     --name pesquisas-nps \
+     --resource-group seu-resource-group \
+     --runtime "PYTHON:3.12" \
+     --plan seu-app-service-plan
+
+4. CONFIGURAR STARTUP
+   az webapp config set \
+     --name pesquisas-nps \
+     --resource-group seu-resource-group \
+     --startup-file "startup.sh"
+
+5. CONFIGURAR VARIÁVEIS DE AMBIENTE
+   az webapp config appsettings set \
+     --name pesquisas-nps \
+     --resource-group seu-resource-group \
+     --settings \
+       SECRET_KEY="sua-secret-key" \
+       DEBUG="False" \
+       ALLOWED_HOSTS="pesquisas-nps.azurewebsites.net" \
+       DB_HOST="seu-servidor.database.windows.net" \
+       DB_NAME="dbNPS" \
+       DB_USER="user-nps" \
+       DB_PASSWORD="senha" \
+       SENDGRID_API_KEY="sua-api-key" \
+       SENDGRID_FROM_EMAIL="no-reply@br-itsoftware.com.br"
+
+6. FAZER DEPLOY
+   az webapp up \
+     --name pesquisas-nps \
+     --resource-group seu-resource-group
+
+================================================================================
+OPÇÃO 3: USAR SCRIPT POWERSHELL (FACILITA O PROCESSO)
+================================================================================
+
+1. EXECUTAR SCRIPT
+   cd pesquisas_nps
+   .\deploy_azure.ps1
+
+2. SEGUIR INSTRUÇÕES
+   - O script verificará se o App Service existe
+   - Verificará variáveis de ambiente
+   - Fornecerá instruções específicas
+
+================================================================================
+CONFIGURAÇÕES OBRIGATÓRIAS
+================================================================================
+
+VARIÁVEIS DE AMBIENTE MÍNIMAS:
+- SECRET_KEY (gerar com: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+- DEBUG=False
+- ALLOWED_HOSTS=pesquisas-nps.azurewebsites.net
+- CSRF_TRUSTED_ORIGINS=https://pesquisas-nps.azurewebsites.net
+- DB_HOST=seu-servidor.database.windows.net
+- DB_PORT=1433
+- DB_NAME=dbNPS
+- DB_USER=user-nps
+- DB_PASSWORD=senha
+- SENDGRID_API_KEY=sua-api-key
+- SENDGRID_FROM_EMAIL=no-reply@br-itsoftware.com.br
+
+CONFIGURAÇÕES DO APP SERVICE:
+- Startup Command: startup.sh
+- Working Directory: /home/site/wwwroot/django_app (ou deixar vazio se usar startup.sh)
+
+FIREWALL DO BANCO DE DADOS:
+- Permitir serviços do Azure: SIM
+- Adicionar IPs do App Service (ver em App Service → Propriedades → Outbound IP addresses)
+
+================================================================================
+PÓS-DEPLOY
+================================================================================
+
+1. EXECUTAR MIGRATIONS
+   - Via SSH: az webapp ssh --name pesquisas-nps --resource-group seu-rg
+   - cd django_app
+   - python manage.py migrate
+
+2. COLETAR ARQUIVOS ESTÁTICOS
+   - python manage.py collectstatic --noinput
+
+3. CRIAR SUPERUSUÁRIO (opcional)
+   - python manage.py createsuperuser
+
+4. TESTAR APLICAÇÃO
+   - Acesse: https://pesquisas-nps.azurewebsites.net
+   - Verifique se está funcionando
+   - Teste envio de email
+   - Teste formulário de pesquisa
+
+================================================================================
+TROUBLESHOOTING RÁPIDO
+================================================================================
+
+ERRO 500:
+- Verifique logs: App Service → Log stream
+- Verifique variáveis de ambiente
+- Verifique se migrations foram executadas
+
+ERRO DE CONEXÃO COM BANCO:
+- Verifique firewall do SQL Server
+- Verifique credenciais do banco
+- Verifique se "Permitir serviços do Azure" está ativado
+
+ARQUIVOS ESTÁTICOS NÃO CARREGAM:
+- Execute: python manage.py collectstatic
+- Verifique se WhiteNoise está configurado
+
+DEPLOY FALHA:
+- Verifique logs do GitHub Actions
+- Verifique se startup.sh tem permissão de execução
+- Verifique se o caminho do projeto está correto
+
+================================================================================
+ARQUIVOS CRIADOS PARA DEPLOY
+================================================================================
+
+✓ startup.sh - Script de inicialização do Azure
+✓ .deployment - Configuração de deployment
+✓ deploy_azure.ps1 - Script PowerShell para facilitar deploy
+✓ .github/workflows/azure-deploy.yml - Workflow GitHub Actions
+✓ requirements.txt - Dependências atualizadas
+
+================================================================================
+PRÓXIMOS PASSOS
+================================================================================
+
+1. Fazer commit dos novos arquivos:
+   git add .
+   git commit -m "Adicionar arquivos de configuração para Azure App Service"
+   git push origin main
+
+2. Criar App Service no Azure Portal (se ainda não criou)
+
+3. Configurar Deployment Center com GitHub
+
+4. Configurar variáveis de ambiente
+
+5. Aguardar deploy automático
+
+6. Testar aplicação
+
+================================================================================
+CONTATO
+================================================================================
+
+Para mais detalhes, consulte:
+- INSTRUCOES_AZURE_APP_SERVICE.txt (instruções completas)
+- PROXIMOS_PASSOS.md (próximos passos do projeto)
+
+================================================================================
+
+

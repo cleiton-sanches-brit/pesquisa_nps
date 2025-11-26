@@ -1,0 +1,447 @@
+================================================================================
+    INSTRUÇÕES PARA CONFIGURAÇÃO DO AZURE APP SERVICE
+    Sistema de Pesquisas NPS - Django
+================================================================================
+
+Este documento contém instruções passo a passo para configurar o Azure App 
+Service para hospedar a aplicação Django de pesquisas NPS.
+
+================================================================================
+1. PRÉ-REQUISITOS
+================================================================================
+
+Antes de começar, certifique-se de ter:
+
+✓ Conta no Azure Portal (https://portal.azure.com)
+✓ Acesso ao Azure SQL Database já configurado
+✓ Credenciais do SendGrid (API Key)
+✓ Repositório GitHub atualizado com o código
+✓ Azure CLI instalado (opcional, mas recomendado)
+
+================================================================================
+2. CRIAR O APP SERVICE NO AZURE PORTAL
+================================================================================
+
+2.1. Acesse o Azure Portal
+    - URL: https://portal.azure.com
+    - Faça login com suas credenciais
+
+2.2. Criar Novo App Service
+    - No menu lateral, clique em "Criar um recurso"
+    - Busque por "App Service" ou "Web App"
+    - Clique em "Criar"
+
+2.3. Configurar Básico
+    - Resource Group: Selecione um grupo existente ou crie um novo
+    - Nome: pesquisas-nps (ou outro nome disponível)
+    - Publicar: Código
+    - Runtime stack: Python 3.12
+    - Sistema Operacional: Linux
+    - Região: Escolha a mesma região do seu Azure SQL Database
+    - App Service Plan: 
+      * Se já existe um plano, selecione-o
+      * Se não, crie um novo:
+        - Nome: pesquisas-nps-plan
+        - SKU: B1 Basic (recomendado para início)
+        - Região: Mesma do App Service
+
+2.4. Revisar e Criar
+    - Revise todas as configurações
+    - Clique em "Revisar + criar"
+    - Aguarde a validação
+    - Clique em "Criar"
+    - Aguarde a criação (pode levar alguns minutos)
+
+================================================================================
+3. CONFIGURAR DEPLOYMENT (IMPLANTAÇÃO)
+================================================================================
+
+3.1. Deployment Center via GitHub (Recomendado)
+
+    a) No App Service criado, vá em "Deployment Center" no menu lateral
+    
+    b) Configurar Fonte:
+       - Source: GitHub
+       - Organização: cleiton-sanches-brit (ou britsoftware)
+       - Repositório: pesquisa_nps (ou PesquisaNPS)
+       - Branch: main
+       - Runtime stack: Python 3.12
+       - Build Provider: GitHub Actions (recomendado)
+    
+    c) Autorizar GitHub:
+       - Clique em "Autorizar"
+       - Faça login no GitHub
+       - Autorize o Azure a acessar seus repositórios
+    
+    d) Salvar:
+       - Clique em "Salvar"
+       - O Azure criará automaticamente um workflow do GitHub Actions
+       - O primeiro deploy será iniciado automaticamente
+
+3.2. Configurar Caminho do Projeto (Importante!)
+
+    Após o primeiro deploy, você precisa configurar o caminho correto:
+    
+    a) No App Service, vá em "Configuration" → "General settings"
+    
+    b) Configure:
+       - Startup Command: 
+         gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 600 nps_admin.wsgi:application
+       
+       - Working Directory: /home/site/wwwroot/django_app
+    
+    c) Salve as alterações
+
+================================================================================
+4. CONFIGURAR VARIÁVEIS DE AMBIENTE
+================================================================================
+
+4.1. Acessar Configurações
+    - No App Service, vá em "Configuration"
+    - Clique na aba "Application settings"
+    - Clique em "New application setting" para cada variável
+
+4.2. Variáveis Obrigatórias do Django
+
+    Nome: SECRET_KEY
+    Valor: [Gerar uma chave secreta forte - ver seção 4.3]
+    
+    Nome: DEBUG
+    Valor: False
+    
+    Nome: ALLOWED_HOSTS
+    Valor: pesquisas-nps.azurewebsites.net,seu-dominio.com.br
+    (Substitua "pesquisas-nps" pelo nome do seu App Service)
+    
+    Nome: CSRF_TRUSTED_ORIGINS
+    Valor: https://pesquisas-nps.azurewebsites.net,https://seu-dominio.com.br
+    (Substitua pelos seus domínios reais)
+
+4.3. Gerar SECRET_KEY
+
+    Execute no terminal local:
+    
+    python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+    
+    Copie a chave gerada e use no campo SECRET_KEY acima.
+
+4.4. Variáveis do Banco de Dados (Azure SQL)
+
+    Nome: DB_HOST
+    Valor: seu-servidor-azure.database.windows.net
+    (Substitua pelo nome do seu servidor SQL)
+    
+    Nome: DB_PORT
+    Valor: 1433
+    
+    Nome: DB_NAME
+    Valor: dbNPS
+    (Ou o nome do seu banco de dados)
+    
+    Nome: DB_USER
+    Valor: user-nps
+    (Ou o usuário do banco)
+    
+    Nome: DB_PASSWORD
+    Valor: [Sua senha do banco de dados]
+
+4.5. Variáveis do SendGrid
+
+    Nome: SENDGRID_API_KEY
+    Valor: SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    (Sua API Key do SendGrid)
+    
+    Nome: SENDGRID_FROM_EMAIL
+    Valor: no-reply@br-itsoftware.com.br
+    
+    Nome: SENDGRID_FROM_NAME
+    Valor: BR-IT Software
+
+4.6. Salvar Configurações
+    - Após adicionar todas as variáveis, clique em "Salvar"
+    - O App Service será reiniciado automaticamente
+
+================================================================================
+5. CONFIGURAR BANCO DE DADOS AZURE SQL
+================================================================================
+
+5.1. Liberar Acesso do App Service ao Banco
+
+    a) No Azure Portal, vá em "SQL servers"
+    b) Selecione seu servidor SQL
+    c) Vá em "Firewalls e redes virtuais"
+    
+    d) Configurar Firewall:
+       - Marque a opção: "Permitir que os serviços e recursos do Azure 
+         acessem este servidor"
+       - Clique em "Salvar"
+    
+    e) Adicionar IPs do App Service:
+       - No App Service, vá em "Propriedades"
+       - Copie todos os "Outbound IP addresses"
+       - Volte ao SQL Server → Firewalls
+       - Para cada IP, adicione uma regra:
+         * Nome da regra: AllowAppService-IP1, AllowAppService-IP2, etc.
+         * IP inicial: [cole o IP]
+         * IP final: [cole o mesmo IP]
+       - Clique em "Salvar"
+
+5.2. Verificar Conexão (Opcional)
+
+    Após configurar, você pode testar a conexão executando migrations:
+    - No App Service, vá em "SSH" ou "Console"
+    - Execute: python manage.py showmigrations
+
+================================================================================
+6. CONFIGURAR ARQUIVOS ESTÁTICOS (STATIC FILES)
+================================================================================
+
+6.1. Configurar WhiteNoise (Já configurado no código)
+
+    O projeto já está configurado com WhiteNoise para servir arquivos 
+    estáticos. Certifique-se de que as seguintes configurações estão 
+    presentes no settings.py:
+    
+    - MIDDLEWARE inclui 'whitenoise.middleware.WhiteNoiseMiddleware'
+    - STATIC_ROOT está configurado
+    - STATICFILES_STORAGE está configurado
+
+6.2. Coletar Arquivos Estáticos
+
+    No primeiro deploy ou após mudanças nos arquivos estáticos:
+    
+    a) No App Service, vá em "SSH" ou "Console"
+    b) Navegue até o diretório: cd django_app
+    c) Execute: python manage.py collectstatic --noinput
+
+================================================================================
+7. EXECUTAR MIGRAÇÕES DO BANCO DE DADOS
+================================================================================
+
+7.1. Via SSH/Console do App Service
+
+    a) No App Service, vá em "SSH" ou "Console"
+    b) Navegue até: cd django_app
+    c) Execute: python manage.py migrate
+
+7.2. Via Azure CLI (Alternativa)
+
+    az webapp ssh --name pesquisas-nps --resource-group seu-resource-group
+    cd django_app
+    python manage.py migrate
+
+7.3. Criar Superusuário (Opcional)
+
+    Para acessar o admin do Django:
+    
+    python manage.py createsuperuser
+    
+    Siga as instruções para criar o usuário admin.
+
+================================================================================
+8. CONFIGURAR DOMÍNIO PERSONALIZADO (OPCIONAL)
+================================================================================
+
+8.1. Adicionar Domínio Personalizado
+
+    a) No App Service, vá em "Domínios personalizados"
+    b) Clique em "Adicionar domínio personalizado"
+    c) Digite seu domínio (ex: pesquisas.br-itsoftware.com.br)
+    d) Siga as instruções para configurar DNS:
+       - Adicione um registro CNAME apontando para:
+         pesquisas-nps.azurewebsites.net
+       - Ou adicione um registro A conforme instruções do Azure
+
+8.2. Configurar SSL/TLS
+
+    a) No App Service, vá em "TLS/SSL settings"
+    b) Configure certificado:
+       - Use "App Service Managed Certificate" (gratuito)
+       - Ou faça upload de um certificado próprio
+    c) Configure HTTPS Only: Ativado
+
+8.3. Atualizar Variáveis de Ambiente
+
+    Após configurar o domínio, atualize:
+    - ALLOWED_HOSTS: adicione o novo domínio
+    - CSRF_TRUSTED_ORIGINS: adicione https://seu-dominio.com.br
+
+================================================================================
+9. CONFIGURAR LOGS E MONITORAMENTO
+================================================================================
+
+9.1. Habilitar Logs de Aplicação
+
+    a) No App Service, vá em "App Service logs"
+    b) Configure:
+       - Application Logging (Filesystem): Ligado
+       - Level: Information (ou Error para produção)
+       - Retention Period: 7 dias (ou conforme necessidade)
+    c) Salve as alterações
+
+9.2. Habilitar Logs de HTTP
+
+    a) Na mesma página, configure:
+       - HTTP logging: Ligado
+       - Retention Period: 7 dias
+    b) Salve as alterações
+
+9.3. Visualizar Logs
+
+    - No App Service, vá em "Log stream" para ver logs em tempo real
+    - Ou vá em "Advanced Tools" → "Go" → "Log Files" para ver logs históricos
+
+================================================================================
+10. TESTAR A APLICAÇÃO
+================================================================================
+
+10.1. Verificar Deploy
+
+    a) Acesse: https://pesquisas-nps.azurewebsites.net
+    b) Verifique se a aplicação está respondendo
+    c) Verifique os logs em caso de erro
+
+10.2. Testar Funcionalidades
+
+    - Acesse o admin: https://pesquisas-nps.azurewebsites.net/admin
+    - Crie uma pesquisa de teste
+    - Envie um convite de teste
+    - Verifique se o email foi enviado
+    - Teste o formulário de resposta
+
+10.3. Verificar Performance
+
+    - Monitore o uso de recursos no Azure Portal
+    - Verifique os logs de erro
+    - Ajuste o plano conforme necessário
+
+================================================================================
+11. CONFIGURAÇÕES ADICIONAIS DE SEGURANÇA
+================================================================================
+
+11.1. Configurar HTTPS Only
+
+    - No App Service, vá em "TLS/SSL settings"
+    - Ative "HTTPS Only"
+
+11.2. Configurar CORS (se necessário)
+
+    - As configurações de CORS já estão no código
+    - Ajuste CORS_ALLOWED_ORIGINS no settings.py se necessário
+
+11.3. Configurar Rate Limiting
+
+    - O middleware de rate limiting já está configurado
+    - Ajuste os limites no código se necessário
+
+================================================================================
+12. TROUBLESHOOTING (SOLUÇÃO DE PROBLEMAS)
+================================================================================
+
+12.1. Erro 500 - Internal Server Error
+
+    - Verifique os logs em "Log stream"
+    - Verifique se todas as variáveis de ambiente estão configuradas
+    - Verifique se o banco de dados está acessível
+    - Verifique se as migrations foram executadas
+
+12.2. Erro de Conexão com Banco de Dados
+
+    - Verifique se o firewall do SQL Server permite o App Service
+    - Verifique se as credenciais estão corretas
+    - Verifique se o servidor SQL está acessível
+
+12.3. Arquivos Estáticos Não Carregam
+
+    - Execute: python manage.py collectstatic
+    - Verifique se WhiteNoise está configurado corretamente
+    - Verifique se STATIC_ROOT está configurado
+
+12.4. Email Não Envia
+
+    - Verifique se SENDGRID_API_KEY está configurada
+    - Verifique se o sender está verificado no SendGrid
+    - Verifique os logs do SendGrid
+
+12.5. Deploy Falha
+
+    - Verifique os logs do GitHub Actions
+    - Verifique se o caminho do projeto está correto
+    - Verifique se o startup command está correto
+    - Verifique se todas as dependências estão no requirements.txt
+
+================================================================================
+13. COMANDOS ÚTEIS DO AZURE CLI
+================================================================================
+
+# Listar App Services
+az webapp list --output table
+
+# Ver logs em tempo real
+az webapp log tail --name pesquisas-nps --resource-group seu-resource-group
+
+# Reiniciar App Service
+az webapp restart --name pesquisas-nps --resource-group seu-resource-group
+
+# Ver variáveis de ambiente
+az webapp config appsettings list --name pesquisas-nps --resource-group seu-resource-group
+
+# Adicionar variável de ambiente
+az webapp config appsettings set --name pesquisas-nps --resource-group seu-resource-group --settings NOME_VARIAVEL="valor"
+
+# Conectar via SSH
+az webapp ssh --name pesquisas-nps --resource-group seu-resource-group
+
+# Ver status do deploy
+az webapp deployment list-publishing-profiles --name pesquisas-nps --resource-group seu-resource-group
+
+================================================================================
+14. CHECKLIST FINAL
+================================================================================
+
+Antes de considerar o deploy completo, verifique:
+
+[ ] App Service criado e funcionando
+[ ] Deployment configurado (GitHub Actions)
+[ ] Todas as variáveis de ambiente configuradas
+[ ] SECRET_KEY gerada e configurada
+[ ] DEBUG=False em produção
+[ ] ALLOWED_HOSTS configurado corretamente
+[ ] CSRF_TRUSTED_ORIGINS configurado
+[ ] Firewall do SQL Server configurado
+[ ] Migrations executadas
+[ ] Arquivos estáticos coletados (collectstatic)
+[ ] Logs habilitados
+[ ] HTTPS Only ativado
+[ ] Aplicação acessível via URL
+[ ] Admin do Django acessível
+[ ] Envio de emails funcionando
+[ ] Formulário de pesquisa funcionando
+[ ] Testes básicos realizados
+
+================================================================================
+15. PRÓXIMOS PASSOS APÓS DEPLOY
+================================================================================
+
+1. Configurar backup automático do banco de dados
+2. Configurar alertas de monitoramento
+3. Configurar autoscaling (se necessário)
+4. Otimizar performance conforme uso
+5. Configurar CDN para arquivos estáticos (opcional)
+6. Implementar CI/CD completo
+7. Configurar staging environment (opcional)
+
+================================================================================
+CONTATO E SUPORTE
+================================================================================
+
+Em caso de dúvidas ou problemas:
+- Consulte a documentação oficial do Azure: https://docs.microsoft.com/azure/app-service/
+- Consulte os logs do App Service
+- Verifique a documentação do Django: https://docs.djangoproject.com/
+
+================================================================================
+FIM DO DOCUMENTO
+================================================================================
+
+

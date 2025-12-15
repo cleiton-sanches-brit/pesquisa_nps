@@ -5,6 +5,16 @@
 
 echo "=== Iniciando aplicação Django no Azure App Service ==="
 
+# Verificar e instalar ODBC Driver se necessário
+if ! command -v odbcinst &> /dev/null; then
+    echo "=== Instalando ODBC Driver para SQL Server ==="
+    curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - 2>/dev/null || true
+    curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list 2>/dev/null || true
+    apt-get update -qq
+    ACCEPT_EULA=Y apt-get install -y -qq msodbcsql17 unixodbc-dev 2>/dev/null || echo "Aviso: Não foi possível instalar ODBC Driver automaticamente"
+    echo "=== ODBC Driver verificado ==="
+fi
+
 # Navegar para o diretório da aplicação Django
 cd /home/site/wwwroot/django_app || exit 1
 

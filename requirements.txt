@@ -13,7 +13,7 @@ email-validator==2.1.0
 
 # SQL Server (Azure SQL)
 pyodbc==5.0.1
-django-mssql-backend==2.8.1
+django-pyodbc-azure==2.1.0.17
 
 # PostgreSQL (opcional - Supabase)
 psycopg2-binary==2.9.9

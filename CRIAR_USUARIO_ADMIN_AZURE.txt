@@ -1,0 +1,329 @@
+================================================================================
+    GUIA COMPLETO: CRIAR USUÁRIO ADMIN NO AZURE APP SERVICE
+    Sistema de Pesquisas NPS
+================================================================================
+
+POR QUE PRECISO CRIAR UM NOVO USUÁRIO?
+---------------------------------------
+- Localmente: Você usa SQLite (arquivo db.sqlite3) com usuário admin
+- No Azure: A aplicação usa SQL Server (banco remoto) que é completamente 
+  separado
+- Conclusão: O usuário criado localmente NÃO estará disponível no Azure
+
+Os usuários do Django são armazenados na tabela auth_user do banco de dados.
+Como são bancos diferentes, você precisa criar um novo usuário no Azure.
+
+================================================================================
+MÉTODO 1: VIA CONSOLE/SSH DO AZURE PORTAL (RECOMENDADO)
+================================================================================
+
+PASSO 1: Acessar o Console do App Service
+-------------------------------------------
+1. Acesse o Azure Portal: https://portal.azure.com
+2. Navegue até seu App Service (ex: pesquisas-nps)
+3. No menu lateral, procure por:
+   - "SSH" ou
+   - "Console" ou
+   - "Advanced Tools" → "Go" → "SSH"
+
+PASSO 2: Navegar até a pasta do Django
+---------------------------------------
+No console, execute:
+
+    cd django_app
+
+Nota: Se a pasta tiver outro nome, ajuste o comando.
+O caminho padrão é: /home/site/wwwroot/django_app
+
+PASSO 3: Verificar se as migrações foram executadas
+-----------------------------------------------------
+    python manage.py showmigrations
+
+Se houver migrações pendentes, execute:
+
+    python manage.py migrate
+
+PASSO 4: Criar o Superusuário
+-------------------------------
+    python manage.py createsuperuser
+
+PASSO 5: Preencher os dados
+-----------------------------
+O Django solicitará as seguintes informações:
+
+    Username: [digite o nome de usuário, ex: admin]
+    Email address: [digite o email, ex: admin@example.com]
+    Password: [digite a senha - não aparecerá na tela]
+    Password (again): [confirme a senha]
+
+Exemplo:
+    Username: admin
+    Email address: admin@br-itsoftware.com.br
+    Password: ********
+    Password (again): ********
+
+PASSO 6: Confirmar criação
+---------------------------
+Se tudo estiver correto, você verá:
+
+    Superuser created successfully.
+
+PASSO 7: Testar o acesso
+--------------------------
+1. Acesse a URL do seu App Service: https://seu-app.azurewebsites.net/admin/
+2. Faça login com as credenciais criadas
+3. Você deve ver o painel administrativo do Django
+
+================================================================================
+MÉTODO 2: VIA AZURE CLI
+================================================================================
+
+PASSO 1: Conectar via SSH
+--------------------------
+    az webapp ssh --name nome-do-seu-app --resource-group nome-do-resource-group
+
+Exemplo:
+    az webapp ssh --name pesquisas-nps --resource-group rg-pesquisas-nps
+
+PASSO 2: Navegar e criar usuário
+----------------------------------
+    cd django_app
+    python manage.py migrate  # Se necessário
+    python manage.py createsuperuser
+
+Siga as instruções interativas para criar o usuário.
+
+================================================================================
+MÉTODO 3: CRIAR VIA SCRIPT PYTHON (NÃO INTERATIVO)
+================================================================================
+
+Este método é útil para automação ou quando você não pode usar o modo interativo.
+
+PASSO 1: Criar o script
+-------------------------
+No console do Azure, execute:
+
+    cd django_app
+    cat > criar_admin.py << 'EOF'
+    import os
+    import django
+
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nps_admin.settings')
+    django.setup()
+
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+
+    # Configurações do usuário
+    USERNAME = 'admin'
+    EMAIL = 'admin@br-itsoftware.com.br'
+    PASSWORD = 'SuaSenhaSegura123!'  # ALTERE ESTA SENHA!
+
+    # Verificar se o usuário já existe
+    if User.objects.filter(username=USERNAME).exists():
+        print(f'Usuário {USERNAME} já existe!')
+        user = User.objects.get(username=USERNAME)
+        user.set_password(PASSWORD)
+        user.save()
+        print(f'Senha do usuário {USERNAME} foi atualizada!')
+    else:
+        # Criar novo superusuário
+        User.objects.create_superuser(
+            username=USERNAME,
+            email=EMAIL,
+            password=PASSWORD
+        )
+        print(f'Superusuário {USERNAME} criado com sucesso!')
+    EOF
+
+PASSO 2: Editar o script
+--------------------------
+⚠️ IMPORTANTE: Antes de executar, edite o script e altere:
+- PASSWORD = 'SuaSenhaSegura123!' → Use uma senha forte
+- USERNAME e EMAIL se desejar
+
+PASSO 3: Executar o script
+----------------------------
+    python criar_admin.py
+
+PASSO 4: Remover o script (opcional, por segurança)
+-----------------------------------------------------
+    rm criar_admin.py
+
+================================================================================
+MÉTODO 4: USAR VARIÁVEIS DE AMBIENTE (MAIS SEGURO)
+================================================================================
+
+PASSO 1: Configurar variáveis no Azure Portal
+-----------------------------------------------
+1. No Azure Portal, vá em App Service → Configuration → Application settings
+2. Adicione as seguintes variáveis:
+
+    ADMIN_USERNAME=admin
+    ADMIN_EMAIL=admin@br-itsoftware.com.br
+    ADMIN_PASSWORD=SuaSenhaSegura123!
+
+3. Clique em Save
+
+PASSO 2: Criar script que usa variáveis de ambiente
+-----------------------------------------------------
+No console do Azure:
+
+    cd django_app
+    cat > criar_admin_env.py << 'EOF'
+    import os
+    import django
+
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nps_admin.settings')
+    django.setup()
+
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+
+    # Obter valores das variáveis de ambiente
+    USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+    EMAIL = os.getenv('ADMIN_EMAIL', 'admin@example.com')
+    PASSWORD = os.getenv('ADMIN_PASSWORD')
+
+    if not PASSWORD:
+        print('ERRO: Variável ADMIN_PASSWORD não configurada!')
+        exit(1)
+
+    # Verificar se o usuário já existe
+    if User.objects.filter(username=USERNAME).exists():
+        print(f'Usuário {USERNAME} já existe! Atualizando senha...')
+        user = User.objects.get(username=USERNAME)
+        user.set_password(PASSWORD)
+        user.save()
+        print(f'Senha do usuário {USERNAME} foi atualizada!')
+    else:
+        # Criar novo superusuário
+        User.objects.create_superuser(
+            username=USERNAME,
+            email=EMAIL,
+            password=PASSWORD
+        )
+        print(f'Superusuário {USERNAME} criado com sucesso!')
+    EOF
+
+PASSO 3: Executar o script
+---------------------------
+    python criar_admin_env.py
+
+PASSO 4: Remover variáveis de ambiente (recomendado)
+----------------------------------------------------
+Após criar o usuário, remova a variável ADMIN_PASSWORD do Azure Portal por 
+segurança.
+
+================================================================================
+ALTERAR SENHA DE USUÁRIO EXISTENTE
+================================================================================
+
+MÉTODO 1: Via Django Shell
+---------------------------
+    cd django_app
+    python manage.py shell
+
+No shell Python:
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    user = User.objects.get(username='admin')
+    user.set_password('NovaSenhaSegura123!')
+    user.save()
+    print('Senha alterada com sucesso!')
+    exit()
+
+MÉTODO 2: Via Comando Django
+------------------------------
+    python manage.py changepassword admin
+
+Siga as instruções para definir a nova senha.
+
+================================================================================
+TROUBLESHOOTING (SOLUÇÃO DE PROBLEMAS)
+================================================================================
+
+ERRO: "Command 'python' not found"
+-----------------------------------
+Solução: Use python3 em vez de python:
+
+    python3 manage.py createsuperuser
+
+ERRO: "ModuleNotFoundError: No module named 'django'"
+-----------------------------------------------------
+Solução: Certifique-se de estar no ambiente virtual correto ou que o Django 
+está instalado:
+
+    pip list | grep Django
+    pip install -r requirements.txt
+
+ERRO: "django.db.utils.OperationalError"
+------------------------------------------
+Solução: Verifique a conexão com o banco de dados:
+
+1. Verifique as variáveis de ambiente no Azure Portal:
+   - DB_HOST
+   - DB_NAME
+   - DB_USER
+   - DB_PASSWORD
+
+2. Teste a conexão:
+    python manage.py dbshell
+
+ERRO: "Table 'auth_user' doesn't exist"
+-----------------------------------------
+Solução: Execute as migrações primeiro:
+
+    python manage.py migrate
+
+ERRO: "Superuser already exists"
+---------------------------------
+Solução: O usuário já existe. Você pode:
+- Usar o usuário existente
+- Alterar a senha (veja seção acima)
+- Criar um usuário com nome diferente
+
+================================================================================
+CHECKLIST DE VERIFICAÇÃO
+================================================================================
+
+Use este checklist para garantir que tudo está configurado corretamente:
+
+[ ] Aplicação está deployada no Azure
+[ ] Migrações foram executadas (python manage.py migrate)
+[ ] Banco de dados está acessível
+[ ] Variáveis de ambiente estão configuradas no Azure Portal
+[ ] Superusuário foi criado com sucesso
+[ ] Consigo acessar /admin/ no navegador
+[ ] Consigo fazer login com as credenciais criadas
+[ ] Consigo ver o painel administrativo
+
+================================================================================
+BOAS PRÁTICAS DE SEGURANÇA
+================================================================================
+
+1. Use senhas fortes: Mínimo de 12 caracteres, com letras, números e símbolos
+2. Não compartilhe credenciais: Cada administrador deve ter seu próprio usuário
+3. Remova variáveis de ambiente: Após criar o usuário, remova ADMIN_PASSWORD 
+   do Azure
+4. Use HTTPS: Sempre acesse o admin via HTTPS
+5. Mude a senha regularmente: Especialmente em ambientes de produção
+6. Limite acesso: Crie usuários com permissões mínimas necessárias
+
+================================================================================
+SUPORTE ADICIONAL
+================================================================================
+
+Se encontrar problemas:
+
+1. Verifique os logs do App Service: App Service → Log stream
+2. Verifique os logs de aplicação: App Service → Logs → Application Logs
+3. Teste a conexão com o banco: python manage.py dbshell
+4. Verifique as variáveis de ambiente no Azure Portal
+
+================================================================================
+

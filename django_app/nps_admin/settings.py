@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Necessário para funcionalidades de sites
     'rest_framework',
     'corsheaders',
     'surveys',
@@ -82,22 +83,36 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nps_admin.wsgi.application'
 
-# Database - Azure SQL Server
-DATABASES = {
-    'default': {
-        'ENGINE': 'sql_server.pyodbc',
-        'NAME': os.getenv('DB_NAME', 'dbNPS'),
-        'USER': os.getenv('DB_USER', 'user-nps'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', '172.190.157.142'),
-        'PORT': os.getenv('DB_PORT', '1433'),
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'extra_params': 'TrustServerCertificate=yes',  # Para Azure SQL
-        },
-        'CONN_MAX_AGE': 600,  # 10 minutos
+# Database - Azure SQL Server ou SQLite para desenvolvimento local
+DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+USE_SQLITE = os.getenv('USE_SQLITE', '').lower() == 'true' or (DEBUG and (not DB_PASSWORD or DB_PASSWORD.strip() == ''))
+
+if USE_SQLITE:
+    # SQLite para desenvolvimento local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # Azure SQL Server para produção
+    # Usa django-pyodbc-azure (mais estável que django-mssql-backend)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'sql_server.pyodbc',  # django-pyodbc-azure
+            'NAME': os.getenv('DB_NAME', 'dbNPS'),
+            'USER': os.getenv('DB_USER', 'user-nps'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', '10.1.1.5'),
+            'PORT': os.getenv('DB_PORT', '1433'),
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+                'extra_params': 'TrustServerCertificate=yes',  # Para Azure SQL
+            },
+            'CONN_MAX_AGE': 600,  # 10 minutos
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -120,6 +135,9 @@ LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
+
+# Django Sites Framework
+SITE_ID = 1  # ID do site padrão (será criado na migração)
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'

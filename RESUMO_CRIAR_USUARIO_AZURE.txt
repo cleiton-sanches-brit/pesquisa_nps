@@ -1,0 +1,51 @@
+================================================================================
+    RESUMO RÁPIDO: CRIAR USUÁRIO ADMIN NO AZURE
+================================================================================
+
+MÉTODO MAIS RÁPIDO (RECOMENDADO):
+----------------------------------
+
+1. Acesse o Azure Portal → Seu App Service → SSH/Console
+
+2. Execute:
+    cd django_app
+    python manage.py migrate
+    python manage.py createsuperuser
+
+3. Preencha os dados solicitados
+
+4. Acesse: https://seu-app.azurewebsites.net/admin/
+
+
+MÉTODO COM SCRIPT:
+------------------
+
+1. Faça upload do arquivo criar_admin_azure.py para o servidor
+
+2. Execute:
+    cd django_app
+    python criar_admin_azure.py
+
+3. Siga as instruções
+
+
+ALTERAR SENHA:
+---------------
+
+    cd django_app
+    python manage.py changepassword admin
+
+
+IMPORTANTE:
+-----------
+- O usuário criado localmente NÃO funciona no Azure
+- São bancos de dados diferentes (SQLite local vs SQL Server Azure)
+- Você DEVE criar um novo usuário no Azure
+
+
+PARA MAIS DETALHES:
+-------------------
+Consulte: CRIAR_USUARIO_ADMIN_AZURE.md ou CRIAR_USUARIO_ADMIN_AZURE.txt
+
+================================================================================
+

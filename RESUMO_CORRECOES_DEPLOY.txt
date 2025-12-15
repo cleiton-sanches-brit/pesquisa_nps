@@ -1,0 +1,68 @@
+================================================================================
+    RESUMO DAS CORREÇÕES PARA DEPLOY NO AZURE
+================================================================================
+
+ERROS CORRIGIDOS:
+-----------------
+
+1. ✅ Adicionado django.contrib.sites ao INSTALLED_APPS
+2. ✅ Adicionado SITE_ID = 1 nas configurações
+3. ✅ Corrigido ENGINE de 'sql_server.pyodbc' para 'mssql'
+
+ARQUIVOS MODIFICADOS:
+---------------------
+
+1. django_app/nps_admin/settings.py
+   - Adicionado 'django.contrib.sites' em INSTALLED_APPS
+   - Adicionado SITE_ID = 1
+   - Corrigido ENGINE: 'mssql' (em vez de 'sql_server.pyodbc')
+
+2. startup.sh
+   - Adicionada verificação/instalação do ODBC Driver (opcional)
+
+PRÓXIMOS PASSOS:
+----------------
+
+1. Fazer commit das alterações:
+   git add django_app/nps_admin/settings.py startup.sh
+   git commit -m "Corrigir erros de deploy: sites framework e database engine"
+   git push origin main
+
+2. Verificar no Azure Portal:
+   - App Service → Configuration → Application settings
+   - Certifique-se de que todas as variáveis estão configuradas
+   - Especialmente: DB_HOST, DB_NAME, DB_USER, DB_PASSWORD
+
+3. Se o deploy ainda falhar com erro de ODBC:
+   - O Azure App Service Linux pode não ter o ODBC Driver instalado
+   - Consulte: CORRIGIR_ERROS_DEPLOY_AZURE.md
+   - Considere usar Dockerfile (veja documentação)
+
+4. Após deploy bem-sucedido:
+   - Execute migrações: python manage.py migrate
+   - Crie superusuário: python manage.py createsuperuser
+   - Configure site padrão (se necessário)
+
+TESTE LOCAL ANTES DO DEPLOY:
+-----------------------------
+
+Para testar se as correções funcionam localmente:
+
+1. Configure USE_SQLITE=false (ou defina DB_PASSWORD)
+2. Execute: python manage.py check
+3. Execute: python manage.py migrate
+4. Teste: python manage.py runserver
+
+Se funcionar localmente, deve funcionar no Azure (desde que o ODBC Driver
+esteja disponível).
+
+================================================================================
+DOCUMENTAÇÃO COMPLETA:
+================================================================================
+
+Para mais detalhes, consulte:
+- CORRIGIR_ERROS_DEPLOY_AZURE.md (guia completo)
+- CRIAR_USUARIO_ADMIN_AZURE.md (criar usuário no Azure)
+
+================================================================================
+

@@ -1,0 +1,137 @@
+================================================================================
+    COMO INICIAR O SERVIDOR DJANGO PELO CMD (Command Prompt)
+    Sistema de Pesquisas NPS
+================================================================================
+
+PASSO 1: ABRIR O CMD
+---------------------
+1. Pressione Windows + R
+2. Digite: cmd
+3. Pressione Enter
+
+
+PASSO 2: NAVEGAR ATÉ A PASTA DO PROJETO
+---------------------------------------
+No CMD, digite:
+
+    cd C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\django_app
+
+OU (se você já estiver na pasta pesquisas_nps):
+
+    cd django_app
+
+
+PASSO 3: CONFIGURAR VARIÁVEL DE AMBIENTE
+-----------------------------------------
+Para usar SQLite (desenvolvimento local), digite:
+
+    set USE_SQLITE=true
+
+
+PASSO 4: ATIVAR O AMBIENTE VIRTUAL (OPCIONAL)
+---------------------------------------------
+Se você quiser usar o ambiente virtual, digite:
+
+    ..\pesquisas_nps\venv\Scripts\activate
+
+OU (caminho completo):
+
+    C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\pesquisas_nps\venv\Scripts\activate
+
+
+PASSO 5: INICIAR O SERVIDOR
+----------------------------
+Digite:
+
+    python manage.py runserver
+
+OU (se estiver usando o ambiente virtual):
+
+    ..\..\venv\Scripts\python.exe manage.py runserver
+
+
+================================================================================
+COMANDOS COMPLETOS (COPIE E COLE NO CMD)
+================================================================================
+
+Opção 1 - Com ambiente virtual ativado:
+----------------------------------------
+cd C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\django_app
+set USE_SQLITE=true
+..\pesquisas_nps\venv\Scripts\activate
+python manage.py runserver
+
+
+Opção 2 - Sem ambiente virtual (Python do sistema):
+----------------------------------------------------
+cd C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\django_app
+set USE_SQLITE=true
+python manage.py runserver
+
+
+Opção 3 - Especificando o Python do venv diretamente:
+-------------------------------------------------------
+cd C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\django_app
+set USE_SQLITE=true
+..\pesquisas_nps\venv\Scripts\python.exe manage.py runserver
+
+
+================================================================================
+APÓS INICIAR O SERVIDOR
+================================================================================
+
+Você verá uma mensagem como:
+
+    Starting development server at http://127.0.0.1:8000/
+    Quit the server with CTRL-BREAK.
+
+Acesse no navegador:
+    http://localhost:8000/admin/
+
+Credenciais:
+    Usuário: admin
+    Senha: admin123
+
+
+================================================================================
+PARAR O SERVIDOR
+================================================================================
+
+No CMD, pressione: CTRL + C
+
+
+================================================================================
+TROUBLESHOOTING (SOLUÇÃO DE PROBLEMAS)
+================================================================================
+
+1. Se aparecer erro "python não é reconhecido":
+   - Use o caminho completo: ..\pesquisas_nps\venv\Scripts\python.exe
+   - OU: C:\Users\CleitonSanchesBR-iT\Documents\Projetos_automacoes\pesquisas_nps\pesquisas_nps\venv\Scripts\python.exe
+
+2. Se aparecer erro de banco de dados:
+   - Certifique-se de que definiu: set USE_SQLITE=true
+   - Execute as migrações primeiro: python manage.py migrate
+
+3. Se a porta 8000 estiver ocupada:
+   - Use outra porta: python manage.py runserver 8080
+   - Acesse: http://localhost:8080/admin/
+
+4. Para verificar se o servidor está rodando:
+   - Abra o navegador e acesse: http://localhost:8000
+
+
+================================================================================
+COMANDOS ÚTEIS ADICIONAIS
+================================================================================
+
+Executar migrações:
+    python manage.py migrate
+
+Criar superusuário:
+    python manage.py createsuperuser
+
+Verificar configurações:
+    python manage.py check
+
+Listar comandos disponíveis:
+    python manage.py help

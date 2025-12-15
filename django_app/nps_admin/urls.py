@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("ADMIN/", admin.site.urls),  # Aceita também maiúsculas
     path("", include("surveys.urls")),
 ]
 

@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -96,11 +96,10 @@ if USE_SQLITE:
         }
     }
 else:
-    # Azure SQL Server para produção
-    # Usa django-pyodbc-azure (mais estável que django-mssql-backend)
+    # Azure SQL Server para produção - backend oficial mssql-django (Microsoft)
     DATABASES = {
         'default': {
-            'ENGINE': 'sql_server.pyodbc',  # django-pyodbc-azure
+            'ENGINE': 'mssql',
             'NAME': os.getenv('DB_NAME', 'dbNPS'),
             'USER': os.getenv('DB_USER', 'user-nps'),
             'PASSWORD': os.getenv('DB_PASSWORD', ''),

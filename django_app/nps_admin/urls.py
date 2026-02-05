@@ -16,12 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
 
+def home_redirect(request):
+    """Redireciona a raiz para o admin"""
+    return redirect('admin:index')
+
 urlpatterns = [
+    path("", home_redirect, name="home"),
     path("admin/", admin.site.urls),
-    path("ADMIN/", admin.site.urls),  # Aceita também maiúsculas
+    # Incluir URLs de surveys (todas as rotas já têm prefixos como survey/, nps/, etc)
     path("", include("surveys.urls")),
 ]
 
